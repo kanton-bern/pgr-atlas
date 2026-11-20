@@ -1,4 +1,4 @@
-# Builds app/ + docker/ into the image ghcr.io/skerlakanalytics/pgr-atlas and
+# Builds app/ + docker/ into the image ghcr.io/kanton-bern/pgr-atlas and
 # pushes it to GHCR.
 #
 # Tags, depending on what triggered the build:
@@ -47,7 +47,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/skerlakanalytics/pgr-atlas
+  IMAGE: ghcr.io/kanton-bern/pgr-atlas
 
 jobs:
   # The three CI workflows, in parallel, only for a release. A push to main was

@@ -133,14 +133,14 @@ components:
       containers:
         app:
           image:
-            # ghcr.io/skerlakanalytics/pgr-atlas, pulled through Bedag's registry
+            # ghcr.io/kanton-bern/pgr-atlas, pulled through Bedag's registry
             # mirror: the cluster only admits artifacts.bedag.cloud/* images, and
             # artifacts.bedag.cloud/ghcr/<path> serves public ghcr.io/<path>
             # (confirmed by Bedag 2026-09-17; a pod pulled it on kb-common-test).
-            repository: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas
+            repository: artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas
             # Release version, built by CI when the git tag v0.8.0 is pushed.
             # Deploy a new version = change this line.
-            tag: "v0.14.0"
+            tag: "v1.0.0"
             pullPolicy: "IfNotPresent"
           # Lets `kubectl attach` / k9s shell work on the actual app pod. The
           # cluster refuses to allocate a TTY without these even if `exec -it`
@@ -280,7 +280,7 @@ components:
         # unprivileged one; through Bedag's mirror like the app image.
         proxy:
           image:
-            repository: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas-proxy
+            repository: artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas-proxy
             # Release version, built by CI when the git tag proxy-vX.Y.Z is pushed.
             tag: "v0.1.2"
             pullPolicy: "IfNotPresent"

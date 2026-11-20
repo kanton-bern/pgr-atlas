@@ -2,7 +2,7 @@
 
 `s3m` lists buckets, switches versioning, downloads, deletes, restores old
 versions and copies buckets from Hosttech to Bedag. The image
-`ghcr.io/skerlakanalytics/pgr-atlas-s3tools` bundles it with **rclone** (does
+`ghcr.io/kanton-bern/pgr-atlas-s3tools` bundles it with **rclone** (does
 the copying) and the **AWS CLI**.
 
 It is made for a toolbox pod on Bedag's cluster. **Bedag's S3 endpoint

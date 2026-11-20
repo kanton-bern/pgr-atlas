@@ -1,4 +1,4 @@
-# Prunes old ghcr.io/skerlakanalytics/pgr-atlas image versions, daily.
+# Prunes old ghcr.io/kanton-bern/pgr-atlas image versions, daily.
 #
 # Deletes UNTAGGED versions only, older than 1 day: the leftovers created each
 # time a moving tag (:main, :latest, :<branch>) is re-pointed at a newer build.
@@ -37,7 +37,7 @@ jobs:
       - name: Delete old untagged image versions
         uses: snok/container-retention-policy@d3bdcf5ce9b05f685154e4a16c39233b245e3d53 # v3.1.0
         with:
-          account: skerlakanalytics
+          account: kanton-bern
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: pgr-atlas
           cut-off: 1d

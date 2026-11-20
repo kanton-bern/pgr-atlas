@@ -1,4 +1,4 @@
-# Builds tools/proxy into the image ghcr.io/skerlakanalytics/pgr-atlas-proxy:
+# Builds tools/proxy into the image ghcr.io/kanton-bern/pgr-atlas-proxy:
 # nginx with one config file, the app pod's single entry port (see tools/proxy/README.md).
 #
 # Tags, depending on what triggered the build:
@@ -26,7 +26,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/skerlakanalytics/pgr-atlas-proxy
+  IMAGE: ghcr.io/kanton-bern/pgr-atlas-proxy
 
 jobs:
   build-and-push:
