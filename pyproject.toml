@@ -26,7 +26,7 @@ dependencies = [
     # Not imported here: streamlit and geopandas need it at runtime. 26.0.1 is the
     # first release with the Brotli fix for CVE-2026-111497.
     "pyarrow==26.0.1",
-    "boto3==1.44.2",       # brings the matching botocore (imported for its exceptions)
+    "boto3==1.44.3",       # brings the matching botocore (imported for its exceptions)
     "tornado==6.6.1",
     "altair==6.3.0",
     "vl-convert-python==1.9.0.post1",
