@@ -69,7 +69,10 @@ images, so that Bedag's mirror (`artifacts.bedag.cloud/ghcr/…`) can serve it.
 A new package starts private: after the first build, switch it to public once
 in the package's settings on GitHub.
 
-The base image is nginx's own `nginxinc/nginx-unprivileged` from Docker Hub,
-pinned by digest, on nginx's stable branch (even minor versions); Dependabot
-proposes its patch releases, and the next stable (1.32) is a manual change. The copy on ghcr.io is not kept
-up to date (last build 2025-03), which is why the stages don't use it directly.
+The base image is nginx's own `nginx/nginx-unprivileged` from Docker Hub
+(the old name `nginxinc/nginx-unprivileged` stopped at 1.30.6), pinned by
+digest, on nginx's stable branch (even minor versions); Dependabot proposes
+its patch releases, and the next stable (1.32) is a manual change. The
+Dockerfile's `apk upgrade` brings Alpine's fixes but never a newer nginx: the
+base image pins nginx to nginx.org's build, so an nginx CVE needs a new base
+image.
