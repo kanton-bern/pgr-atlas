@@ -1,0 +1,62 @@
+# The app's own Streamlit settings: its look and the static files it serves.
+# Streamlit reads this file from the folder it starts in (app/), so they apply
+# to the image, a local run and the e2e tests alike. The image's deployment
+# settings (port, upload size, error details) are in docker/streamlit_config.toml.
+
+[server]
+# app/static/: the logos and the Roboto font, so the page loads nothing from
+# third-party hosts.
+enableStaticServing = true
+
+# Kanton Bern web style guide, docs/frontend-app/style-tokens.md. The same
+# values as app/styles/tokens.css, which styles what the theme doesn't reach.
+[theme]
+base = "light"
+primaryColor = "#4E4E4E"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F8F8F8"
+textColor = "#000000"
+borderColor = "#707070"
+showWidgetBorder = true
+linkColor = "#000000"
+font = "Roboto, Arial, sans-serif"
+# Page title, section, subsection: H4, H5, H6 of the guide.
+headingFontSizes = ["1.5rem", "1.3125rem", "1.125rem"]
+headingFontWeights = [300, 300, 300]
+baseRadius = "none"
+buttonRadius = "full"
+redColor = "#D01018"
+blueColor = "#1775D3"
+greenColor = "#3D8608"
+orangeColor = "#DD6600"
+redBackgroundColor = "#FCE8E9"
+blueBackgroundColor = "#E9F2FB"
+greenBackgroundColor = "#ECF3E6"
+orangeBackgroundColor = "#FCEFE5"
+
+[theme.sidebar]
+backgroundColor = "#F8F8F8"
+# Input fields stay white on the grey sidebar.
+secondaryBackgroundColor = "#FFFFFF"
+headingFontSizes = ["1.5rem", "1.3125rem", "1.125rem"]
+headingFontWeights = [300, 300, 300]
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/roboto-300.woff"
+weight = 300
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/roboto-400.woff"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/roboto-500.woff"
+weight = 500
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/roboto-700.woff"
+weight = 700

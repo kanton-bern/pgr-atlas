@@ -1,0 +1,26 @@
+# helm values for chart common for all stages
+#
+# Which object types the chart renders, for every stage. What the app looks like
+# per stage: deploy/stages/<stage>/pgr-atlas/values.yaml. Background:
+# docs/deployment-process.md, section 3.
+
+timezone: "Europe/Zurich"
+
+nameOverride: "pgr-atlas"
+
+includes:
+  ingress: true
+  service: true
+  deployment: true
+  statefulset: false
+  envSecret: true   # container envSecret from SOPS-encrypted secret-values.yaml; empty on both stages since 2026-10-09
+  envConfigMap: false
+  files: false
+  configFiles: false
+  binaryFiles: false
+  # true: the stages put the DuckDB spill on a PVC (Bedag's disk budget is PVC storage)
+  pvcs: true
+  job: false
+  cronjob: false
+  servicemonitor: false
+  networkpolicy: false

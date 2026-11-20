@@ -1,0 +1,41 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pgr-atlas
+  labels:
+    prometheus.alerting.bedag.ch: "true"
+  namespace: aw3-pgr-atlas-${stage}-apps
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: common
+      version: "12.6.0"
+      sourceRef:
+        kind: HelmRepository
+        name: bedag-public
+        namespace: flux-public
+  releaseName: pgr-atlas-${stage}
+  install:
+    remediation:
+      # unlimited retries on helm install
+      retries: -1
+      # do not cleanup if helm install fails
+      remediateLastFailure: false
+  upgrade:
+    # only if verified, a rollback don't lead to data inconsistence (e.g. automatic flyway rollback are possible)
+    remediation:
+      # try helm upgrade 5 times
+      retries: 5
+      # if helm upgrade fails, rollback to last successfull release
+      remediateLastFailure: false
+  valuesFrom:
+    - kind: ConfigMap
+      name: pgr-atlas-values
+      optional: true
+    - kind: ConfigMap
+      name: pgr-atlas-stage-values
+      optional: true
+    - kind: Secret
+      name: pgr-atlas-stage-secrets
+      optional: true

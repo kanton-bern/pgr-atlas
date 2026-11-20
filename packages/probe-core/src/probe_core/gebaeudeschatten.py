@@ -1,0 +1,439 @@
+"""Gebäudeschatten (building footprints as release areas): the affected-mask
+rules, the S3 layout, and the read layer behind the app's Gebäudeschatten view.
+
+Written by the pipeline: gold (workers/gebaeudeschatten_gold_worker.py),
+the affected/building masks (derivate/build_gebaeudeschatten_{affected,building}_mask.py)
+and the buildings layer (derivate/build_gebaeudeschatten_buildings_layer.py).
+
+The rules are defined once, here: the pipeline builds the canton-wide
+affected-mask rasters with `affected_pixels_sql`, and the app explains single
+pixels and buildings with `exclusion_reason_sql`, so a pixel the map shows as
+affected is exactly one the explanation calls counting.
+
+Rules, per gold row (one simulation of one building at one pixel):
+
+  raw                            counts if Fliesstiefe >= the minimum depth, judged
+                                 on SIM_SPATIAL's unzeroed depth
+  shadowing_building             excludes the row's own building
+                                 (own_building_mask = 1); the neighbour ring
+                                 (= 2) counts by presence alone, because
+                                 SIM_SPATIAL_ZEROED zeroed its depth; other
+                                 rows need Fliesstiefe >= the minimum depth
+  shadowing_building_surrounding excludes own building and neighbour ring,
+                                 rows below the minimum depth, and the 8 neighbours
+                                 of the building's own = 1 pixels. The last
+                                 one only matters for buildings too small to
+                                 contain a grid center: their single = 1 pixel
+                                 is AvaFrame's release-search fallback and has
+                                 no = 2 ring around it.
+
+A pixel is affected when at least one row there counts; rows are judged per
+building, so a pixel excluded for one building can still be affected by
+another. own_building_mask itself is computed in gold (see the gold worker).
+
+The minimum depth is one of MIN_DEPTHS_CM (1 cm: noise filter; 10 cm: where low
+intensity typically starts); every raster and reason column exists per minimum.
+"""
+
+import threading
+
+import duckdb
+import pandas as pd
+
+from probe_core.data_lake.data_interface import S3_BUCKET_GOLD
+from probe_core.data_lake.data_lake_schema import (
+    DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE,
+    DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE_AFFECTED_MASK,
+    DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE_BUILDING_MASK,
+    GEBAEUDESCHATTEN_AFFECTED_MASK_MIN_DEPTHS_CM,
+    GEBAEUDESCHATTEN_AFFECTED_MASK_VARIANTS,
+    GEBAEUDESCHATTEN_GOLD_REACH_VARIANTS_M,
+    gebaeudeschatten_gold_sim_anriss_dir,
+    gebaeudeschatten_gold_sim_spatial_dir,
+    gebaeudeschatten_gold_sim_spatial_zeroed_dir,
+)
+from probe_core.resources import safe_duckdb_memory_limit
+from probe_core.s3 import configure_s3_for_duckdb, s3_key_exists
+
+VARIANTS = GEBAEUDESCHATTEN_AFFECTED_MASK_VARIANTS
+REACHES_M = GEBAEUDESCHATTEN_GOLD_REACH_VARIANTS_M
+MIN_DEPTHS_CM = GEBAEUDESCHATTEN_AFFECTED_MASK_MIN_DEPTHS_CM
+RESOLUTION_M = 5.0
+# Upper bound on a release polygon's bbox side (full-canton manifest:
+# max 374 m). A building reaching a pixel has its own pixels
+# within reach + this of it -- see building_footprint_pixels.
+MAX_BUILDING_EXTENT_M = 400
+
+# 8-connected neighbours on the 5 m grid; the gold worker's
+# OWN_BUILDING_MASK_NEIGHBOR_OFFSETS uses the same ones for own_building_mask = 2.
+NEIGHBOR_OFFSETS = ((5, 0), (-5, 0), (0, 5), (0, -5), (5, 5), (5, -5), (-5, 5), (-5, -5))
+
+# Exclusion reasons returned by exclusion_reason_sql (NULL = the row counts).
+REASON_OWN_BUILDING = "own_building"  # own_building_mask = 1
+REASON_OWN_NEIGHBOR = "own_neighbor"  # own_building_mask = 2
+REASON_BELOW_MIN_DEPTH = "below_min_depth"  # Fliesstiefe < the minimum depth
+REASON_FALLBACK_NEIGHBOR = "fallback_neighbor"  # next to the building's own = 1 pixel, no = 2 there
+REASONS = (
+    REASON_OWN_BUILDING,
+    REASON_OWN_NEIGHBOR,
+    REASON_BELOW_MIN_DEPTH,
+    REASON_FALLBACK_NEIGHBOR,
+)
+
+# Buildings layer (id_start -> footprint), built from the ingested manifest.
+# The PMTiles sits at the bucket root: the app's tile proxy serves root-level
+# *.pmtiles keys only.
+BUILDINGS_PMTILES_KEY = "gebaeudeschatten_buildings.pmtiles"
+BUILDINGS_PMTILES_LAYER = "buildings"
+BUILDINGS_PARQUET_KEY = f"{DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE}/buildings/buildings.parquet"
+BUILDING_MASK_KEY = (
+    f"{DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE_BUILDING_MASK}/canton_building_mask.tif"
+)
+
+# One simulation of one building: the columns that, with (x, y), identify a gold row.
+_SIMULATION_KEY_COLUMNS = ("id_start", "A", "h", "mu", "xsi", "tau0")
+_SIMULATION_KEY_SQL = ", ".join(_SIMULATION_KEY_COLUMNS)
+
+
+def _check_arguments(
+    reach_m: int | None = None, variant: str | None = None, min_depth_cm: int | None = None
+) -> None:
+    if reach_m is not None and reach_m not in REACHES_M:
+        raise ValueError(f"reach_m={reach_m!r} not in {REACHES_M}")
+    if variant is not None and variant not in VARIANTS:
+        raise ValueError(f"variant={variant!r} not in {VARIANTS}")
+    if min_depth_cm is not None and min_depth_cm not in MIN_DEPTHS_CM:
+        raise ValueError(f"min_depth_cm={min_depth_cm!r} not in {MIN_DEPTHS_CM}")
+
+
+# ── paths ────────────────────────────────────────────────────────────────────
+
+
+def affected_mask_filename(reach_m: int, variant: str, min_depth_cm: int) -> str:
+    _check_arguments(reach_m, variant, min_depth_cm)
+    return f"canton_affected_mask_{variant}_{reach_m}m_min{min_depth_cm}cm.tif"
+
+
+def affected_mask_key(reach_m: int, variant: str, min_depth_cm: int) -> str:
+    return (
+        f"{DATA_LAKE_DIR_GEBAEUDESCHATTEN_DERIVATE_AFFECTED_MASK}/"
+        f"{affected_mask_filename(reach_m, variant, min_depth_cm)}"
+    )
+
+
+def gold_key(reach_m: int, dataset: str) -> str:
+    """dataset: 'SIM_SPATIAL' | 'SIM_SPATIAL_ZEROED' | 'SIM_ANRISS'."""
+    _check_arguments(reach_m)
+    if dataset == "SIM_SPATIAL":
+        return f"{gebaeudeschatten_gold_sim_spatial_dir(reach_m)}/data.parquet"
+    if dataset == "SIM_SPATIAL_ZEROED":
+        return f"{gebaeudeschatten_gold_sim_spatial_zeroed_dir(reach_m)}/data.parquet"
+    if dataset == "SIM_ANRISS":
+        return f"{gebaeudeschatten_gold_sim_anriss_dir(reach_m)}/sim_anriss.parquet"
+    raise ValueError(f"unknown gold dataset {dataset!r}")
+
+
+def affected_mask_source_key(reach_m: int, variant: str) -> str:
+    """The gold file a variant's raster is built from: raw judges SIM_SPATIAL's
+    unzeroed depth, the other two need own_building_mask from SIM_SPATIAL_ZEROED."""
+    _check_arguments(reach_m, variant)
+    return gold_key(reach_m, "SIM_SPATIAL" if variant == "raw" else "SIM_SPATIAL_ZEROED")
+
+
+# ── rules ────────────────────────────────────────────────────────────────────
+
+
+def exclusion_reason_sql(
+    variant: str,
+    min_depth_cm: int,
+    depth: str = "Fliesstiefe",
+    mask: str = "own_building_mask",
+    in_own1_ring: str = "in_own1_ring",
+) -> str:
+    """SQL CASE expression: NULL if the row counts as affected under `variant`
+    at minimum depth `min_depth_cm` (one of MIN_DEPTHS_CM), else one of REASONS.
+    `depth` is Fliesstiefe [cm]; for raw it must be the
+    unzeroed value (SIM_SPATIAL), for the other two either works (they only
+    judge depth where own_building_mask = 0, and zeroing leaves those rows
+    alone). `in_own1_ring` (surrounding only) is a boolean column from
+    own1_ring_sql."""
+    _check_arguments(variant=variant, min_depth_cm=min_depth_cm)
+    below_min_depth = f"{depth} < {int(min_depth_cm)}"
+    # (condition, reason) per variant; the first condition a row meets excludes it.
+    rules = {
+        "raw": [
+            (below_min_depth, REASON_BELOW_MIN_DEPTH),
+        ],
+        "shadowing_building": [
+            (f"{mask} = 1", REASON_OWN_BUILDING),
+            (f"{mask} = 0 AND {below_min_depth}", REASON_BELOW_MIN_DEPTH),
+        ],
+        "shadowing_building_surrounding": [
+            (f"{mask} = 1", REASON_OWN_BUILDING),
+            (f"{mask} = 2", REASON_OWN_NEIGHBOR),
+            (below_min_depth, REASON_BELOW_MIN_DEPTH),
+            (in_own1_ring, REASON_FALLBACK_NEIGHBOR),
+        ],
+    }[variant]
+    return (
+        "(CASE "
+        + " ".join(f"WHEN {condition} THEN '{reason}'" for condition, reason in rules)
+        + " END)"
+    )
+
+
+def own1_ring_sql(own_building_pixels_sql: str) -> str:
+    """SELECT (id_start, x, y) of the 8 grid neighbours of every own = 1 pixel
+    in `own_building_pixels_sql` (a query yielding id_start, x, y). An equi-join target, not
+    a range join: at canton scale that is the difference between finishing
+    and not."""
+    offsets = ", ".join(f"({dx}, {dy})" for dx, dy in NEIGHBOR_OFFSETS)
+    return f"""
+        SELECT DISTINCT own_pixel.id_start,
+                        own_pixel.x + neighbour.dx AS x,
+                        own_pixel.y + neighbour.dy AS y
+        FROM ({own_building_pixels_sql}) AS own_pixel
+        CROSS JOIN (VALUES {offsets}) AS neighbour(dx, dy)"""
+
+
+def _flagged_ctes_sql(rows: str, own_building_pixels_sql: str | None = None) -> str:
+    """The two CTEs every surrounding-rule query ends with:
+
+      own_building_ring   the neighbours of the own = 1 pixels (own1_ring_sql)
+      flagged             every row of the CTE/table `rows`, plus in_own1_ring
+
+    `own_building_pixels_sql` yields the own = 1 pixels (id_start, x, y); by default they are
+    taken from `rows` itself."""
+    own_building_pixels_sql = (
+        own_building_pixels_sql or f"SELECT id_start, x, y FROM {rows} WHERE own_building_mask = 1"
+    )
+    return f"""
+        own_building_ring AS ({own1_ring_sql(own_building_pixels_sql)}
+        ),
+        flagged AS (
+            SELECT {rows}.*, own_building_ring.id_start IS NOT NULL AS in_own1_ring
+            FROM {rows}
+            LEFT JOIN own_building_ring USING (id_start, x, y)
+        )"""
+
+
+def affected_pixels_sql(variant: str, source: str, min_depth_cm: int) -> str:
+    """The canton-wide raster query: DISTINCT (x, y) with at least one counting
+    row. `source` is the parquet path/URL of affected_mask_source_key's file."""
+    reason = exclusion_reason_sql(variant, min_depth_cm)
+    if variant != "shadowing_building_surrounding":
+        return f"""
+            SELECT DISTINCT x, y
+            FROM read_parquet('{source}')
+            WHERE {reason} IS NULL
+        """
+    return f"""
+        WITH gold_rows AS (
+            SELECT id_start, x, y, own_building_mask, Fliesstiefe
+            FROM read_parquet('{source}')
+        ),
+        {_flagged_ctes_sql("gold_rows")}
+        SELECT DISTINCT x, y
+        FROM flagged
+        WHERE {reason} IS NULL
+    """
+
+
+def reason_column(variant: str, min_depth_cm: int) -> str:
+    """Column of building_rows/pixel_rows holding the reason for (variant, min depth)."""
+    _check_arguments(variant=variant, min_depth_cm=min_depth_cm)
+    return f"reason_{variant}_min{min_depth_cm}cm"
+
+
+def _reason_columns_sql() -> str:
+    """One reason column per (variant, minimum depth), over a `flagged` row."""
+    return ",\n                   ".join(
+        f"{exclusion_reason_sql(variant, min_depth_cm)} AS {reason_column(variant, min_depth_cm)}"
+        for variant in VARIANTS
+        for min_depth_cm in MIN_DEPTHS_CM
+    )
+
+
+# ── read layer (app) ─────────────────────────────────────────────────────────
+
+_shared_connection = None
+_shared_connection_lock = threading.Lock()
+
+
+def _cursor() -> duckdb.DuckDBPyConnection:
+    """A cursor on one process-wide database. Sharing it keeps DuckDB's
+    object cache (parquet footers) warm: the first read of a gold file costs
+    ~1.2 s for its metadata, later reads ~0.1 s. Cursors are per call, so
+    threads don't share one; S3 settings are per session, so each cursor
+    gets them."""
+    global _shared_connection
+    with _shared_connection_lock:
+        if _shared_connection is None:
+            connection = duckdb.connect()
+            connection.execute("INSTALL httpfs; LOAD httpfs;")
+            connection.execute(f"SET memory_limit='{safe_duckdb_memory_limit()}'")
+            connection.execute("SET enable_object_cache=true")
+            _shared_connection = connection
+        cursor = _shared_connection.cursor()
+    cursor.execute("SET http_retries=4")
+    configure_s3_for_duckdb(cursor)
+    return cursor
+
+
+# Values go into the SQL as literals, not prepared-statement parameters: with
+# parameters DuckDB does not prune row groups by their min/max, and a point
+# lookup in the x/y-sorted gold takes 4.6 s instead of 0.1 s (measured).
+# Every value passes through float()/int() first.
+def _float_literal(value) -> str:
+    return repr(float(value))
+
+
+def _id_list(id_starts) -> str:
+    return ", ".join(str(int(id_start)) for id_start in id_starts)
+
+
+def _s3_url(bucket: str, key: str) -> str:
+    return f"s3://{bucket}/{key}"
+
+
+def is_available(bucket: str = S3_BUCKET_GOLD) -> bool:
+    """Whether `bucket` holds what the Gebäudeschatten view needs."""
+    return s3_key_exists(bucket, BUILDINGS_PMTILES_KEY) and s3_key_exists(
+        bucket, gold_key(max(REACHES_M), "SIM_SPATIAL_ZEROED")
+    )
+
+
+def building_rows(id_start: int, reach_m: int, bucket: str = S3_BUCKET_GOLD) -> pd.DataFrame:
+    """Every gold row of one building (all its simulations), unzeroed values
+    plus own_building_mask, in_own1_ring and one reason column per (variant,
+    minimum depth), see reason_column (NULL = counts). Empty if the building has no rows at this reach."""
+    _check_arguments(reach_m)
+    sim_anriss = _s3_url(bucket, gold_key(reach_m, "SIM_ANRISS"))
+    zeroed = _s3_url(bucket, gold_key(reach_m, "SIM_SPATIAL_ZEROED"))
+    con = _cursor()
+    try:
+        # SIM_ANRISS is sorted by id_start, so this reads ~one row group; its
+        # bbox then prunes the x/y-sorted SIM_SPATIAL_ZEROED to a few more.
+        con.execute(f"""
+            CREATE TEMP TABLE unzeroed AS
+            SELECT {_SIMULATION_KEY_SQL}, x, y, Fliesstiefe, Fliessgeschwindigkeit, Druck
+            FROM read_parquet('{sim_anriss}')
+            WHERE id_start = {int(id_start)}
+        """)
+        xmin, xmax, ymin, ymax = con.execute(
+            "SELECT MIN(x), MAX(x), MIN(y), MAX(y) FROM unzeroed"
+        ).fetchone()
+        if xmin is None:
+            xmin, xmax, ymin, ymax = 0, -1, 0, -1  # empty range: no rows, same columns
+        return con.execute(f"""
+            WITH masks AS (
+                SELECT {_SIMULATION_KEY_SQL}, x, y, own_building_mask
+                FROM read_parquet('{zeroed}')
+                WHERE id_start = {int(id_start)}
+                  AND x BETWEEN {_float_literal(xmin)} AND {_float_literal(xmax)}
+                  AND y BETWEEN {_float_literal(ymin)} AND {_float_literal(ymax)}
+            ),
+            gold_rows AS (
+                SELECT unzeroed.*, masks.own_building_mask
+                FROM unzeroed
+                JOIN masks USING ({_SIMULATION_KEY_SQL}, x, y)
+            ),
+            {_flagged_ctes_sql("gold_rows")}
+            SELECT *,
+                   {_reason_columns_sql()}
+            FROM flagged
+            ORDER BY A, h, mu, xsi, tau0, x, y
+        """).df()
+    finally:
+        con.close()
+
+
+def pixel_rows(x: float, y: float, reach_m: int, bucket: str = S3_BUCKET_GOLD) -> pd.DataFrame:
+    """Every gold row at one pixel center (every simulation of every building
+    that reaches it), unzeroed values plus own_building_mask, in_own1_ring and
+    one reason column per (variant, minimum depth), see reason_column (NULL = counts)."""
+    _check_arguments(reach_m)
+    zeroed = _s3_url(bucket, gold_key(reach_m, "SIM_SPATIAL_ZEROED"))
+    spatial = _s3_url(bucket, gold_key(reach_m, "SIM_SPATIAL"))
+    at_pixel = f"x = {_float_literal(x)} AND y = {_float_literal(y)}"
+    con = _cursor()
+    try:
+        # The fallback ring test only needs own = 1 pixels within one cell of
+        # (x, y) -- both files are x/y-sorted, so every read here is pruned.
+        return con.execute(f"""
+            WITH unzeroed AS (
+                SELECT {_SIMULATION_KEY_SQL}, x, y, Fliesstiefe, Fliessgeschwindigkeit, Druck
+                FROM read_parquet('{spatial}')
+                WHERE {at_pixel}
+            ),
+            masks AS (
+                SELECT {_SIMULATION_KEY_SQL}, x, y, own_building_mask
+                FROM read_parquet('{zeroed}')
+                WHERE {at_pixel}
+            ),
+            gold_rows AS (
+                SELECT unzeroed.*, masks.own_building_mask
+                FROM unzeroed
+                JOIN masks USING ({_SIMULATION_KEY_SQL}, x, y)
+            ),
+            own_building_pixels_nearby AS (
+                SELECT id_start, x, y
+                FROM read_parquet('{zeroed}')
+                WHERE x BETWEEN {_float_literal(x - RESOLUTION_M)} AND {_float_literal(x + RESOLUTION_M)}
+                  AND y BETWEEN {_float_literal(y - RESOLUTION_M)} AND {_float_literal(y + RESOLUTION_M)}
+                  AND own_building_mask = 1
+            ),
+            {_flagged_ctes_sql("gold_rows", own_building_pixels_sql="SELECT * FROM own_building_pixels_nearby")}
+            SELECT *,
+                   {_reason_columns_sql()}
+            FROM flagged
+            ORDER BY id_start, A, h, mu, xsi, tau0
+        """).df()
+    finally:
+        con.close()
+
+
+def building_footprint_pixels(
+    id_starts: list[int],
+    reach_m: int,
+    near: tuple[float, float, float, float],
+    bucket: str = S3_BUCKET_GOLD,
+) -> pd.DataFrame:
+    """DISTINCT (id_start, x, y, own_building_mask) of the own = 1 and ring = 2
+    pixels of several buildings. `near` (xmin, ymin, xmax, ymax, LV95) must
+    contain them; it prunes the x/y-sorted file (for the buildings reaching one
+    pixel, that pixel padded by reach_m + MAX_BUILDING_EXTENT_M is enough)."""
+    _check_arguments(reach_m)
+    if not id_starts:
+        return pd.DataFrame(columns=["id_start", "x", "y", "own_building_mask"])
+    xmin, ymin, xmax, ymax = near
+    con = _cursor()
+    try:
+        return con.execute(f"""
+            SELECT DISTINCT id_start, x, y, own_building_mask
+            FROM read_parquet('{_s3_url(bucket, gold_key(reach_m, "SIM_SPATIAL_ZEROED"))}')
+            WHERE own_building_mask IN (1, 2)
+              AND id_start IN ({_id_list(id_starts)})
+              AND x BETWEEN {_float_literal(xmin)} AND {_float_literal(xmax)}
+              AND y BETWEEN {_float_literal(ymin)} AND {_float_literal(ymax)}
+            ORDER BY id_start, own_building_mask, x, y
+        """).df()
+    finally:
+        con.close()
+
+
+def building_geometries(id_starts: list[int], bucket: str = S3_BUCKET_GOLD) -> pd.DataFrame:
+    """id_start, geometry_wkb (LV95 footprint, courtyard holes filled -- the
+    polygon that was simulated) for the given buildings."""
+    if not id_starts:
+        return pd.DataFrame(columns=["id_start", "geometry_wkb"])
+    con = _cursor()
+    try:
+        return con.execute(f"""
+            SELECT id_start, geometry_wkb
+            FROM read_parquet('{_s3_url(bucket, BUILDINGS_PARQUET_KEY)}')
+            WHERE id_start IN ({_id_list(id_starts)})
+            ORDER BY id_start
+        """).df()
+    finally:
+        con.close()

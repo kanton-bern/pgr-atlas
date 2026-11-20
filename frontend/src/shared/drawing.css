@@ -1,0 +1,51 @@
+/* The draw control of the maps with a rectangle and polygon tool
+   (shared/drawing.ts): its box, buttons and size readout. */
+
+#map.drawing {
+  cursor: crosshair;
+}
+#draw-ctrl {
+  background: var(--mc-bg);
+  border-radius: var(--mc-radius);
+  padding: 8px 12px;
+  font-family: var(--mc-font);
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: var(--mc-shadow);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#draw-btn,
+#draw-poly-btn,
+#clear-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid var(--pgr-brand);
+  background: var(--pgr-bg);
+  color: var(--pgr-text);
+  font: inherit;
+  font-weight: 400;
+}
+#draw-btn:hover,
+#draw-poly-btn:hover,
+#clear-btn:hover {
+  background: var(--pgr-brand-dark);
+  color: white;
+}
+#draw-btn.active,
+#draw-poly-btn.active {
+  background: var(--pgr-brand);
+  color: #fff;
+  border-color: var(--pgr-brand);
+}
+#bbox-readout {
+  color: #444;
+  white-space: nowrap;
+}
+/* mapbox-gl-draw's own toolbar: the buttons above drive it instead. */
+.mapboxgl-ctrl-group {
+  display: none !important;
+}

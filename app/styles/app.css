@@ -1,0 +1,484 @@
+/* Global stylesheet, loaded once per run by app.py with st.html(). Selectors use
+   Streamlit's data-testid attributes, checked against the rendered DOM of the
+   pinned Streamlit version (pyproject.toml). Re-check them on upgrade.
+   Never write a "less than" sign in this file, not even in a comment: the HTML
+   sanitizer then drops the whole style element and the app is unstyled. */
+
+/* The design tokens (--pgr-*) are in tokens.css, which app.py loads first.
+   Colours, font and corners of Streamlit's own widgets come from the theme
+   (app/.streamlit/config.toml); this file styles only what the theme can't. */
+
+/* The referrer meta tag is injected with st.markdown; hide its empty container
+   so it doesn't reserve a flex gap above the first element. */
+[data-testid="stElementContainer"]:has(meta[name="referrer"]) { display: none !important; }
+
+/* Hide the top bar's menus but keep stHeader: the sidebar's re-expand button
+   lives inside it. The header is a full-width bar above the content, so it
+   must let clicks through except on that button. */
+[data-testid="stHeader"] {
+  display: block !important;
+  background: transparent !important;
+  height: auto !important;
+  pointer-events: none !important;
+}
+[data-testid="stExpandSidebarButton"],
+[data-testid="stExpandSidebarButton"] * { pointer-events: auto !important; }
+[data-testid="stToolbar"] { background: transparent !important; }
+[data-testid="stMainMenu"],
+[data-testid="stAppDeployButton"],
+[data-testid="stStatusWidget"],
+[data-testid="stToolbarActions"],
+#MainMenu,
+footer { display: none !important; }
+
+/* Alerts: the theme gives the 10 % tint; the guide adds a 5 px left border in
+   the functional colour, with black text. */
+[data-testid="stAlertContainer"] {
+  color: var(--pgr-text) !important;
+  border-left: 5px solid var(--pgr-info);
+}
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) {
+  border-left-color: var(--pgr-warning);
+}
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentError"]) {
+  border-left-color: var(--pgr-error);
+}
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentSuccess"]) {
+  border-left-color: var(--pgr-success);
+}
+[data-testid="stAlertContainer"] * { color: var(--pgr-text) !important; }
+
+/* The identity band: the project's teal across the top of the whole page,
+   its one use of the project colour (style-tokens.md 4.1). Fixed, so it also
+   stays when the sidebar is collapsed; above the sidebar's own layer. */
+.stApp::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--pgr-project);
+  z-index: 1000000;
+  pointer-events: none;
+}
+/* The top padding starts below the band. */
+.block-container {
+  padding: calc(0.4rem + 4px) 1rem 1rem 1rem !important;
+  max-width: 100% !important;
+}
+iframe[title="st.pydeck_chart"] { height: 95vh !important; }
+hr { margin: 0.5em 0 !important; }
+/* Sidebar separators: Streamlit pulls the element below a markdown block up
+   by 1rem, so the bottom margin needs that much more to leave 12 px on both
+   sides of the line. */
+[data-testid="stSidebar"] hr { margin: 0.5rem 0 1.5rem 0 !important; }
+
+/* Keyboard focus: the guide only scales a focused button, which is easy to
+   miss, so buttons and links get an outline (client-approved). */
+.stApp button:focus-visible,
+.stApp a:focus-visible {
+  outline: 2px solid var(--pgr-focus) !important;
+  outline-offset: 2px;
+}
+/* Links (A67): black, underlined; the line turns red on hover and focus. */
+.stApp a:hover,
+.stApp a:focus-visible { text-decoration-color: var(--pgr-accent); }
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+
+/* A fixed default width: the sidebar is user-draggable and the width is
+   persisted per browser. Fits both logos. Only while expanded: a forced
+   width on the collapsed sidebar keeps its column and the map never gets
+   the full page. Streamlit marks the state with data-collapsed (since 1.66.1;
+   aria-expanded before, now only on the expand button). The top padding
+   starts below the identity band. */
+[data-testid="stSidebar"] { padding-top: calc(0.5rem + 4px) !important; }
+[data-testid="stSidebar"][data-collapsed="false"] {
+  width: 300px !important;
+  min-width: 300px !important;
+}
+/* The app's name above the logos: black like the guide's logo caption (A137),
+   but 24 px bold instead of its 16 px/400 so the name reads as the title.
+   A div, not a heading, so Streamlit adds no anchor link to it. */
+[data-testid="stSidebar"] .pgr-app-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: 0.01rem;
+  margin: 0;
+}
+/* The process ("Hangmuren") on its own line below the name. */
+[data-testid="stSidebar"] .pgr-app-title .pgr-app-topic { display: block; }
+/* The block above the navigation: the app's name and the two logos. */
+[data-testid="stSidebar"] .pgr-sidebar-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  text-align: center;
+  /* Up into the band Streamlit leaves for the collapse button, and clear of
+     the navigation below. The block overlaps that band, so it lets clicks
+     through to the button. */
+  margin: -3rem 0 1.75rem 0;
+  pointer-events: none;
+}
+[data-testid="stSidebar"] img.pgr-logo-be { width: 140px; }
+[data-testid="stSidebar"] img.pgr-logo-wide { width: 200px; }
+[data-testid="stSidebar"] label { font-weight: 500 !important; }
+/* A heading over sidebar content that is no widget ("Gebiet"), sized as the
+   widget labels around it. The bottom margin is the one a markdown paragraph
+   has: Streamlit pulls the next element up by that much. */
+[data-testid="stSidebar"] .pgr-field-label {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.25rem !important; }
+
+/* The sidebar's foot (app.py, key pgr_sidebar_foot): version, data source and
+   DE | FR, always in view at the bottom of the sidebar. The sidebar's content
+   is a column at least as tall as the sidebar, so on a short sidebar the foot
+   sits at the bottom; on a long one it sticks to the bottom, on the sidebar's
+   grey with a rule above, while the rest scrolls behind it. Nothing follows
+   the foot, so at the end of the scroll the last element sits above it. */
+[data-testid="stSidebarContent"] {
+  display: flex;
+  flex-direction: column;
+}
+/* No padding below: Streamlit's 96 px would lift the foot off the bottom. */
+[data-testid="stSidebarUserContent"] { padding-bottom: 0 !important; }
+[data-testid="stSidebarUserContent"],
+[data-testid="stSidebarUserContent"] > div {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+[data-testid="stSidebarUserContent"] > div > [data-testid="stVerticalBlock"] { flex: 1 0 auto; }
+[data-testid="stLayoutWrapper"]:has(> .st-key-pgr_sidebar_foot) {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--pgr-surface);
+}
+.st-key-pgr_sidebar_foot {
+  padding: 12px 0;
+  border-top: 1px solid var(--pgr-line);
+}
+/* Streamlit pulls the element below a markdown block up by 1rem; here that
+   would put DE | FR on the data source line. */
+.st-key-pgr_sidebar_foot [data-testid="stMarkdownContainer"] { margin-bottom: 0; }
+/* Version and data source (ui_text.version_footer). */
+[data-testid="stSidebar"] .pgr-version {
+  text-align: center;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pgr-text-muted);
+}
+/* DE | FR (language.py), the guide's language selector (A144-A146): text in
+   14/18 px, weight 400, black, "|" between the items, the current one with a
+   2 px red underline (the same signal as the navigation's red bar). Centred
+   under the version, like it. Each item is at least 24 x 24 px. The
+   current item is a disabled button, so Streamlit's grey is replaced by black. */
+.st-key-pgr_lang {
+  width: fit-content !important;
+  margin: 0 auto;
+  gap: 0 !important;
+}
+.st-key-pgr_lang [data-testid^="stBaseButton"] {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 3px 4px;
+  color: var(--pgr-text) !important;
+}
+.st-key-pgr_lang [data-testid^="stBaseButton"] p {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 400;
+}
+.st-key-pgr_lang [data-testid^="stBaseButton"]:hover p { text-decoration: underline; }
+.st-key-pgr_lang [data-testid^="stBaseButton"]:disabled { cursor: default; }
+.st-key-pgr_lang [data-testid^="stBaseButton"]:disabled p {
+  text-decoration: underline 2px var(--pgr-accent);
+  text-underline-offset: 4px;
+}
+.st-key-pgr_lang [data-testid="stElementContainer"] + [data-testid="stElementContainer"]::before {
+  content: "|";
+  align-self: center;
+  font-size: 14px;
+  line-height: 18px;
+}
+.st-key-pgr_lang [data-testid="stElementContainer"] {
+  display: flex;
+  align-items: center;
+  width: auto !important;
+}
+
+/* ── Page header and sidebar navigation ─────────────────────────────────── */
+
+/* The header at the top of every view (ui_common.page_header): the
+   title is the page's only h1, in the guide's H4 (24/28 px, 300), with the
+   context chips beside it and one line of instruction below. */
+.st-key-pgr_page_header { margin-bottom: 0.25rem; }
+.pgr-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pgr-page-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.stApp h1.pgr-page-title {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 300;
+  color: var(--pgr-text);
+  margin: 0;
+  padding: 0;
+}
+.stApp .pgr-page-hint {
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--pgr-text);
+  margin: 0;
+}
+/* What is selected ("Pixel …", "Experten-Modus aktiv"): a quiet outlined pill. */
+.pgr-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--pgr-text-muted);
+  border-radius: 999px;
+  background: var(--pgr-surface);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--pgr-text);
+  white-space: nowrap;
+}
+
+/* The sidebar navigation (app.py): plain black links in a ruled list
+   (a Line Grey rule above the first row and under every row), the active one
+   marked by a 4 px red bar on its left and weight 500 (the guide's accent),
+   the open Anriss indented below the views. Streamlit's own highlight of the
+   current page is replaced by the bar. */
+[data-testid="stVerticalBlock"].st-key-pgr_nav,
+.st-key-pgr_nav [data-testid="stVerticalBlock"] { gap: 0 !important; }
+/* The rule above the first row; space, not another rule, before the Anriss lookup. */
+.st-key-pgr_nav { margin-bottom: 1.5rem; border-top: 1px solid var(--pgr-line); }
+/* Streamlit pulls each page link 6 px into its neighbours; rows must not overlap,
+   or the rules and the red bar land inside the next row. */
+.st-key-pgr_nav [data-testid="stElementContainer"] { margin: 0; }
+.st-key-pgr_nav [data-testid="stPageLink-NavLink"] {
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid var(--pgr-line);
+  border-radius: 0;
+  background: transparent !important;
+  padding: 12px 16px;
+  margin: 0;
+}
+.st-key-pgr_nav [data-testid="stPageLink-NavLink"] p {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: var(--pgr-text);
+}
+.st-key-pgr_nav [data-testid="stPageLink-NavLink"]:hover p {
+  text-decoration: underline;
+  text-decoration-color: var(--pgr-accent);
+}
+.st-key-pgr_nav .st-key-nav_current [data-testid="stPageLink-NavLink"] {
+  border-left-color: var(--pgr-accent);
+}
+.st-key-pgr_nav .st-key-nav_current [data-testid="stPageLink-NavLink"] p { font-weight: 500; }
+.st-key-pgr_nav .st-key-nav_current [data-testid="stPageLink-NavLink"]:hover p {
+  text-decoration: none;
+}
+.st-key-pgr_nav_sub [data-testid="stPageLink-NavLink"] { padding-left: 32px; }
+/* A long link ("Zone de déclenchement 977441") wraps instead of ending in "…". */
+.st-key-pgr_nav [data-testid="stPageLink-NavLink"] span,
+.st-key-pgr_nav [data-testid="stPageLink-NavLink"] p {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* The Simulierte Ereignisse map (key "overview_map", views/overview.py) takes the height the
+   column leaves between the header and the footer, instead of the component's
+   fixed frame height. The column is a flex column at least as tall as the window
+   (Footer, below), so the map grows to the footer and follows window resizes.
+   Basis 0 and an explicit min-height make the frame's own height attribute,
+   which Streamlit sets from setFrameHeight, irrelevant. */
+.st-key-overview_map,
+.st-key-overview_map > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: var(--pgr-overview-map-min-height);
+}
+.st-key-overview_map iframe {
+  display: block;
+  flex: 1 1 0;
+  min-height: var(--pgr-overview-map-min-height);
+}
+
+/* The Datenstand in the Simulierte Ereignisse header (views/overview.py): wide enough
+   for three counts of up to eleven digits in a row, in a smaller size. */
+[data-testid="stPopoverBody"]:has(.st-key-overview_stats_counts) {
+  min-width: min(660px, 90vw);
+}
+.st-key-overview_stats_counts [data-testid="stMetricValue"] {
+  font-size: 28px;
+  line-height: 32px;
+}
+
+/* The bordered Experten-Modus box (st.container key="expert_modus_box"). */
+.st-key-expert_modus_box {
+  background-color: var(--pgr-bg) !important;
+  border: 1px solid var(--pgr-brand) !important;
+  padding: 4px 8px !important;
+}
+
+/* The IFK curve cards (st.container keys ifk_curve_card_depth/_velocity/_pressure):
+   one bordered box per variable holding its heading, chart and the CSV/PNG
+   pair, so each pair reads as that chart's. The card fills the column's full
+   height and its last child (the two buttons) is pushed to the bottom, so the
+   three button rows line up across the columns even when one variable has no
+   data or the Experten-Modus legend makes a chart taller. */
+[class*="st-key-ifk_curve_card_"] {
+  height: 100%;
+  background-color: var(--pgr-bg) !important;
+  border: 1px solid var(--pgr-line) !important;
+  padding: 0.75rem !important;
+}
+[class*="st-key-ifk_curve_card_"] > :last-child:has([data-testid="stDownloadButton"]) {
+  margin-top: auto;
+}
+
+/* Raster-Derivate downloads (st.container key="derivate_downloads"): a thin
+   line between Ausschnitt (left) and Ganzer Kanton (right). Only while the
+   two are side by side; Streamlit stacks columns up to 640px. */
+@media (min-width: 641px) {
+  .st-key-derivate_downloads [data-testid="stColumn"]:last-child {
+    border-left: 1px solid var(--pgr-text-muted);
+    padding-left: 1rem;
+  }
+}
+
+/* Metric values (st.metric): digits of one width, so the numbers line up. */
+[data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
+
+/* ── Buttons and inputs ─────────────────────────────────────────────────── */
+
+/* Secondary buttons: the guide's (A29) Anthrazit outline. Descendant, not
+   child selectors: a button with help= sits inside a tooltip wrapper.
+   No hover scale (the guide's): the sidebar buttons fill its width. */
+.stButton button, .stDownloadButton button, .stFormSubmitButton button {
+  border-color: var(--pgr-brand);
+}
+.stButton button:hover, .stDownloadButton button:hover, .stFormSubmitButton button:hover {
+  border-color: var(--pgr-text);
+  color: var(--pgr-text);
+}
+/* Primary buttons (the main action, e.g. "Raster erzeugen"): Anthrazit, A27. */
+.stButton button[kind="primary"], .stFormSubmitButton button[kind="primaryFormSubmit"] {
+  font-weight: 500;
+}
+.stButton button[kind="primary"]:hover,
+.stFormSubmitButton button[kind="primaryFormSubmit"]:hover {
+  background-color: var(--pgr-brand-dark);
+  border-color: var(--pgr-brand-dark);
+  color: var(--pgr-bg);
+}
+
+/* No +/- stepper on number inputs (e.g. the Anriss-ID lookup). */
+button[data-testid="stNumberInputStepUp"],
+button[data-testid="stNumberInputStepDown"] { display: none; }
+
+/* Streamlit's English "Press Enter to submit form" / "Press Enter to apply"
+   covers the placeholder. Forms have a submit button, and inputs outside a
+   form also apply when they lose focus. */
+[data-testid="InputInstructions"] { display: none; }
+
+/* Inputs: the guide's near-white field (M9); the theme draws the border. */
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div { background-color: var(--pgr-input-bg) !important; }
+/* Streamlit's faded placeholder is below 4.5:1. */
+input::placeholder, textarea::placeholder {
+  color: var(--pgr-text-muted) !important;
+  opacity: 1 !important;
+}
+
+/* ── Footer (footer.py) ─────────────────────────────────────────────────── */
+
+/* The main block container is a column at least as tall as the viewport, so the
+   footer sits at the bottom on short pages and below the content on long ones. */
+[data-testid="stMainBlockContainer"] {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 4px);
+  padding-bottom: 0 !important;
+}
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] { flex: 1 1 auto; }
+/* One thin row on the sidebar's grey, left-aligned, stuck to the bottom of the
+   viewport while the page scrolls, with a rule above; wraps when the width runs out. */
+[data-testid="stLayoutWrapper"]:has(> .st-key-pgr_footer) {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--pgr-surface);
+}
+.st-key-pgr_footer {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--pgr-line);
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem !important;
+}
+/* The copyright line stays at the left; the four links (the second child on) go
+   to the right. */
+.st-key-pgr_footer > :nth-child(2) { margin-left: auto; }
+.st-key-pgr_footer [data-testid="stCaptionContainer"] {
+  opacity: 1;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--pgr-text-muted);
+}
+.st-key-pgr_footer [data-testid="stPageLink-NavLink"] {
+  padding: 0;
+  min-height: 24px;
+  background: transparent !important;
+}
+.st-key-pgr_footer [data-testid="stPageLink-NavLink"] p {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--pgr-text-muted);
+}
+.st-key-pgr_footer [data-testid="stPageLink-NavLink"]:hover p {
+  text-decoration: underline;
+  text-decoration-color: var(--pgr-accent);
+}
+/* The cross that closes a legal page, at the header row's right end. */
+.st-key-pgr_legal_close { margin-left: auto; }
+
+/* ── Downloads cue (downloads_cue_component.py) ─────────────────────────── */
+
+/* The cue floats over the map's bottom-right corner, clear of the map's own
+   controls (top-right, top-left, top-centre and bottom-left). The position
+   is here and not in the component's shadow CSS: Streamlit lays its element
+   out as a full-size box, and a page rule beats a :host rule. */
+.st-key-pgr_downloads_cue {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: max-content;
+  z-index: 100;
+}
+.st-key-pgr_downloads_cue [data-testid="stBidiComponentIsolated"] {
+  position: static;
+  width: max-content;
+  height: auto;
+}

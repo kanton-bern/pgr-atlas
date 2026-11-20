@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The s3-toolbox pod (tools/s3/README.md). Namespace and Bedag's labels come
+# from ../kustomization.yaml.
+resources:
+  - deployment.yaml
+  # The toolbox's Hosttech key, its own: no other place uses it. A Secret,
+  # SOPS-encrypted (stringData only), which Flux decrypts. To change the key,
+  # write the Secret again in plaintext, encrypt it (sops --encrypt --in-place
+  # <this file>), and bump pgr-atlas/hosttech-key-rotated in deployment.yaml:
+  # without that the running pod keeps the old key.
+  - hosttech-key-secret.yaml
+  - allow-egress-s3-toolbox.yaml

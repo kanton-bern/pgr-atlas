@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* View-specific styles; the shared chrome is in shared/map-controls.css. */
+
+      #legend .legend-swatch {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        border-radius: 2px;
+      }
+      /* The cells' colour key, moved below the cells row (panels.ts). */
+      #cells-legend {
+        margin: 2px 0 0 26px;
+      }
+      #cells-legend .cl-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #333;
+        margin: 2px 0;
+      }
+      #cells-legend .legend-swatch {
+        width: 11px;
+        height: 11px;
+        border: 1px solid #1a1a1a;
+        border-radius: 0;
+      }
+      .cell-tooltip .maplibregl-popup-content {
+        padding: 4px 8px;
+        font-family: var(--mc-font);
+        font-size: var(--mc-body-size);
+        pointer-events: none;
+        white-space: pre-line;
+      }
+      .cell-tooltip .maplibregl-popup-tip {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="tl-stack">
+      <div id="legend">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="legend"
+          data-open-label="layers"
+        >
+          ✕
+        </button>
+        <!-- data-text names the label each element shows (the labels render arg). -->
+        <div class="mc-ctrl-title" data-text="layers"></div>
+        <div id="layer-rows"></div>
+        <div id="cells-legend" hidden></div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

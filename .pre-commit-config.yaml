@@ -1,0 +1,54 @@
+---
+repos:
+  - repo: git@git.mgmtbi.ch:kubernetes/gitops/toolchain/pre-commit-hooks.git
+    rev: v1.5.7
+    hooks:
+      - id: conventional-commit-msg
+      - id: check_kustomization
+      - id: ensure_sops
+        args:
+          - '--ignore-key-regex=(^|\.)secretRef\.(name|optional)$'
+          - '--ignore-key-regex=(^|\.)secretKeyRef\.(name|key|optional)$'
+          - '--ignore-key-regex=(^|\.)imagePullSecrets(?:\.[^.]+)*\.name$'
+          - '--ignore-key-regex=^secrets\.data\.registry\.pullSecret\.(enabled|name)$'
+      - id: profile_sync
+        args: ["-p", "flux", "-r", "git@git.mgmtbi.ch:kubernetes/gitops/toolchain/pre-commit-configs.git"]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+        exclude_types: ['markdown']
+        exclude: '^.*\.(xml|iml|json)$'
+        stages: [pre-commit]
+      - id: trailing-whitespace
+        exclude_types: ['markdown']
+        exclude: '^.*\.(xml|iml)$'
+        stages: [pre-commit]
+      - id: mixed-line-ending
+        stages: [pre-commit]
+      - id: fix-byte-order-marker
+        stages: [pre-commit]
+      - id: check-executables-have-shebangs
+        stages: [pre-commit]
+      - id: check-merge-conflict
+        stages: [pre-commit]
+      - id: check-symlinks
+        stages: [pre-commit]
+      - id: check-yaml
+        stages: [pre-commit]
+        exclude: ^letssign/
+        args: [--allow-multiple-documents]
+      - id: check-json
+        stages: [pre-commit]
+      - id: check-case-conflict
+        stages: [pre-commit]
+
+  - repo: https://github.com/zricethezav/gitleaks.git
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks-docker
+        entry: -u root:root zricethezav/gitleaks protect --verbose --redact --staged
+        # https://github.com/gitleaks/gitleaks/issues/1364#issuecomment-2035545023
+        # workaround for Podman: https://github.com/gitleaks/gitleaks/issues/1385
+        stages: [pre-commit]

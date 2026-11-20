@@ -1,0 +1,7 @@
+creation_rules:
+  - path_regex: (.*-values\.ya?ml|.*\.ce?rt|.*\.key)
+    encrypted_regex: ^(.*)$
+    pgp: 962406ED784BA1D6BBC2B423F4095B882EE062BE
+  - path_regex: .*\.ya?ml
+    encrypted_regex: ^(data|stringData|secrets)$
+    pgp: 962406ED784BA1D6BBC2B423F4095B882EE062BE

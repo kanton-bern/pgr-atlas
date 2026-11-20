@@ -1,0 +1,13 @@
+# Keeps things the running app never uses out of the (public) image.
+#
+# app/README.md is for the repo, not the image.
+context/README.md
+
+# Bytecode from local runs; the image compiles its own.
+**/__pycache__
+**/*.pyc
+
+# Local credentials: .env is git-ignored, but docker/build.sh copies app/ as it
+# is on disk, so a local build could otherwise put one into the public image.
+**/.env
+**/.env.*

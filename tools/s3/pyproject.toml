@@ -1,0 +1,16 @@
+# Python dependencies of the s3tools image (s3m), managed with uv; uv.lock is
+# committed and the Dockerfile installs exactly that. Same boto3/botocore pins
+# as the app (../../pyproject.toml). Not an installable package.
+
+[project]
+name = "pgr-atlas-s3tools"
+version = "0"   # releases are the s3tools-v* git tags
+requires-python = ">=3.12,<3.13"   # the image's python:3.12-slim
+license = "BSD-3-Clause"
+dependencies = [
+    "boto3==1.43.42",
+    "botocore==1.43.42",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,331 @@
+# helm values for stage "test" at Bedag (chart: bedag common 12.6.0)
+#
+# Fitted 2026-09-17 to what Bedag's cluster actually enforces, all verified
+# against the live namespace aw3-pgr-atlas-test-apps (see
+# docs/deployment-process.md, "What the platform enforces"):
+#   - Capsule quota: requests.cpu=4, requests.memory=8Gi, requests.storage
+#     (PVCs) =100Gi (confirmed by Bedag and a server-side dry run, 2026-10-05).
+#     Limits and ephemeral-storage are NOT quota-constrained.
+#     2 pods x (1050m CPU, 2080Mi, 30Gi; app + proxy) + the s3-toolbox
+#     (250m, 512Mi) = 2350m CPU, 4672Mi and 60Gi of requests.
+#   - Kyverno "restrict-image-registries": only artifacts.bedag.cloud/* images;
+#     our ghcr.io image is pulled through Bedag's mirror artifacts.bedag.cloud/ghcr/.
+#   - Egress: direct internet blocked. Bedag's own S3
+#     (x7ba-s3-kakbfe.infra.be.ch:10443) directly (networkpolicies/); the app
+#     reads only that one since 2026-10-09 (PGR_ATLAS_S3_TARGET).
+#   - Ingress class kb-ka = ingress-nginx.
+
+# ── Ingresses ────────────────────────────────────────────────────────────
+ingresses:
+  # Key MUST stay "ingress": the chart renders it as "pgr-atlas-ingress".
+  ingress:
+    deploy: true
+    ingressClassName: "kb-ka"
+    annotations:
+      # swisssign-kb, not cert001-kb as on prod: set in the cluster by Bedag on
+      # 2026-10-30 for the public URL and taken into Git on 2026-11-06, so Helm keeps it.
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+      # tiles are read with Range requests, downloads are streamed
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
+      # Streamlit keeps session state in-process, and raster-job files exist
+      # only in the pod that made them: pin a browser to one pod. One Ingress
+      # and one Service, so the pin holds for every path (tools/proxy/README.md)
+      nginx.ingress.kubernetes.io/affinity: "cookie"
+      nginx.ingress.kubernetes.io/session-cookie-name: "pgr-atlas-affinity"
+      nginx.ingress.kubernetes.io/session-cookie-expires: "86400"
+      nginx.ingress.kubernetes.io/session-cookie-max-age: "86400"
+      # websockets must not be cut off
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    tls:
+      type: "existing"
+    rules:
+      - host: pgr-atlas-test.apps.be.ch
+        # The public URL's own certificate, set up by Bedag on 2026-10-30.
+        secretName: "pgr-atlas-test-apps-be-ch-tls"
+        http:
+          paths:
+            - path: "/"
+              pathType: "Prefix"
+              backend:
+                serviceNameSuffix: app-http
+                servicePort: http
+
+# No pull secret: the image on ghcr.io is public, so the nodes pull it without
+# credentials (docs/deployment-process.md, "The image is public").
+secrets:
+  data:
+    registry:
+      pullSecret:
+        enabled: false
+
+# The chart renders a StatefulSet for this stage (controller.type below), so
+# that each pod gets a spill volume of its own (see extraVolumeClaimTemplates).
+# The base values switch only the Deployment on.
+includes:
+  statefulset: true
+  pvcs: false
+
+components:
+  app:
+    # One Service for the pod's one entry port: the proxy container (below),
+    # which forwards by path to the app container's three servers.
+    services:
+      http:
+        deploy: true
+        name: http
+        port: 8080
+        targetPort: http
+
+    controller:
+      deploy: true
+      type: "StatefulSet"
+      # 2 pods (prod: 3). The Ingress pins a browser to one pod with a cookie, because
+      # Streamlit keeps a session, its raster jobs and its caches in the pod.
+      # A StatefulSet and not a Deployment: the spill volume is ReadWriteOnce,
+      # so every pod needs its own, and pods are replaced one at a time
+      # (RollingUpdate) instead of all at once.
+      replicas: 2
+      # DuckDB's spill, one volume per pod. A PVC rather than an emptyDir
+      # because Bedag's disk budget is PVC storage (quota requests.storage =
+      # 100Gi on test), while an emptyDir lands on the shared node disk that no
+      # quota protects. 30Gi per pod (a third pod's volume would still fit the
+      # quota; the size of a claim template cannot be changed later without
+      # deleting the StatefulSet). The name carries the
+      # chart's prefix, which the volumeMount below gets too.
+      # "block" = Nutanix CSI, ReadWriteOnce.
+      extraVolumeClaimTemplates:
+        - metadata:
+            name: pgr-atlas-spill
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "block"
+            resources:
+              requests:
+                storage: 30Gi
+      extraLabels:
+        "customer.gitops.bedag.ch/hlq": "aw3"
+        "customer.gitops.bedag.ch/stage": "${stage}"
+      # S3: one target, Bedag's own S3 (PGR_ATLAS_S3_TARGET, env below). Its
+      # endpoint, region, bucket and key come from the Secret s3-pgr-atlas-ro
+      # (created by Bedag's operator for s3/access-readonly.yaml): a key that
+      # reads the bucket and is refused on writes and deletes (checked
+      # 2026-10-05). The app has no Hosttech key and no proxy since
+      # 2026-10-09: secrets/secret-values.yaml sets an empty envSecret, and
+      # the s3-toolbox has the Hosttech key in a Secret of its own.
+      podSecurityContext:
+        enabled: true
+        fsGroup: 10001          # makes the spill PVC writable for UID 10001
+        runAsNonRoot: true
+      volumes:
+        - name: cache
+          type: "emptyDir"
+          sizeLimit: 5Gi
+        - name: work
+          type: "emptyDir"
+          sizeLimit: 5Gi
+        # nginx's pid file and temp folders; its root filesystem is read-only
+        - name: proxy-tmp
+          type: "emptyDir"
+          sizeLimit: 64Mi
+
+      containers:
+        app:
+          image:
+            # ghcr.io/skerlakanalytics/pgr-atlas, pulled through Bedag's registry
+            # mirror: the cluster only admits artifacts.bedag.cloud/* images, and
+            # artifacts.bedag.cloud/ghcr/<path> serves public ghcr.io/<path>
+            # (confirmed by Bedag 2026-09-17; a pod pulled it on kb-common-test).
+            repository: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas
+            # Release version, built by CI when the git tag v0.8.0 is pushed.
+            # Deploy a new version = change this line.
+            tag: "v0.14.0"
+            pullPolicy: "IfNotPresent"
+          # Lets `kubectl attach` / k9s shell work on the actual app pod. The
+          # cluster refuses to allocate a TTY without these even if `exec -it`
+          # is otherwise fine.
+          stdin: true
+          tty: true
+          containerPorts:
+            - name: streamlit
+              containerPort: 8501
+            - name: pmtiles
+              containerPort: 8505
+            - name: derivate-bbox
+              containerPort: 8503
+          # A list, not a map: the chart (common 12.6.0, _container.yaml) passes a
+          # list through as-is, which is the only way to use valueFrom.
+          env:
+            # ── S3 source ────────────────────────────────────────────────────
+            # The one target the app reads: Bedag's S3 (app/s3_target.py). The
+            # hosttech target was removed on 2026-10-09, and with it the
+            # sidebar switch, which only shows with two targets.
+            - name: PGR_ATLAS_S3_TARGET
+              value: "bedag"
+            # Bedag's S3 (StorageGRID): all five values from the Secret of the
+            # read-only S3Access (docs/s3.md section 2). Its key reads this one
+            # bucket; it cannot write, delete or list buckets.
+            - name: PGR_ATLAS_S3_BEDAG_ENDPOINT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_ENDPOINT_URL
+            - name: PGR_ATLAS_S3_BEDAG_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_REGION
+            - name: PGR_ATLAS_S3_BEDAG_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: S3_BUCKET
+            - name: PGR_ATLAS_S3_BEDAG_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_ACCESS_KEY_ID
+            - name: PGR_ATLAS_S3_BEDAG_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: PMTILES_PORT
+              value: "8505"
+            - name: PMTILES_BIND
+              value: "0.0.0.0"
+            - name: PMTILES_PATH_PREFIX
+              value: "/pmtiles-data"
+            - name: DERIVATE_BBOX_PORT
+              value: "8503"
+            - name: DERIVATE_BBOX_BIND
+              value: "0.0.0.0"
+            - name: DERIVATE_BBOX_PATH_PREFIX
+              value: "/derivate-bbox"
+            # Progress output ("Kachel i/n") straight into the pod logs; without it
+            # Python buffers stdout in a container and k9s/kubectl logs show nothing.
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            # The two emptyDirs (volumeMounts below). The image sets the same
+            # defaults; set here so mount and path are changed together.
+            - name: PROBE_CACHE_DIR
+              value: "/data/cache"
+            - name: PROBE_WORK_DIR
+              value: "/data/work"
+            # ~90% of the pod's 30Gi spill PVC: DuckDB can't see the volume size,
+            # and the raster work .db file lives in the same directory on top
+            # of the spill files. GiB, not GB -- DuckDB reads GB as 10^9.
+            - name: PROBE_DUCKDB_MAX_TEMP_SIZE
+              value: "27GiB"
+            # No egress proxy variables: the app reaches Bedag's S3 directly
+            # (networkpolicies/) and nothing else outside the cluster. They
+            # were removed with the hosttech target on 2026-10-09; only the
+            # s3-toolbox still goes through the proxy.
+          startupProbe:
+            enabled: true
+            path: "/readyz"
+            port: pmtiles
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60      # 5 minutes grace on cold start
+          readinessProbe:
+            enabled: true
+            path: "/readyz"
+            port: pmtiles
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            enabled: true
+            path: "/readyz"
+            port: pmtiles
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Quota counts requests only (4 CPU / 8Gi for the namespace).
+          # Limits = the budget Bedag gave us; the raster guard sizes itself
+          # from this memory limit (cgroup), ~81 kacheln at 8Gi.
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 4Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              ephemeral-storage: 30Gi   # the emptyDirs above; spill is on the PVC
+          containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: cache
+              path: /data/cache
+            - name: work
+              path: /data/work
+            - name: spill
+              path: /tmp
+
+        # The pod's one entry port: nginx on 8080, forwarding by path to the
+        # three servers of the app container on localhost
+        # (tools/proxy/default.conf). Our own image, built from nginx's
+        # unprivileged one; through Bedag's mirror like the app image.
+        proxy:
+          image:
+            repository: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas-proxy
+            # Release version, built by CI when the git tag proxy-vX.Y.Z is pushed.
+            tag: "v0.1.2"
+            pullPolicy: "IfNotPresent"
+          containerPorts:
+            - name: http
+              containerPort: 8080
+          # Is nginx itself up? Whether the app behind it answers is the app
+          # container's own probes' question.
+          readinessProbe:
+            enabled: true
+            path: "/proxy-healthz"
+            port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            enabled: true
+            path: "/proxy-healthz"
+            port: http
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
+          # It only passes bytes along: about 13Mi and next to no CPU when
+          # measured with the app idle.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+              ephemeral-storage: 16Mi
+            limits:
+              cpu: "1"
+              memory: 128Mi
+              ephemeral-storage: 128Mi
+          containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 101      # the nginx user of the image
+            runAsGroup: 101
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: proxy-tmp
+              path: /tmp

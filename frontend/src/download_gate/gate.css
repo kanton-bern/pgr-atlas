@@ -1,0 +1,71 @@
+:host {
+  display: block;
+}
+
+.gate {
+  box-sizing: border-box;
+  max-width: min(32rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  color: var(--pgr-text);
+  background: var(--pgr-bg);
+  border: 1px solid var(--pgr-brand);
+  border-radius: var(--pgr-radius-input);
+  font: inherit;
+}
+
+.gate::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.statement {
+  margin: 0 0 1.5rem;
+}
+
+.link {
+  color: var(--pgr-text);
+  text-decoration: underline;
+}
+
+.link:hover {
+  text-decoration-color: var(--pgr-accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.button {
+  min-height: 2.5rem;
+  padding: 0.25rem 1rem;
+  font: inherit;
+  color: var(--pgr-text);
+  background: var(--pgr-bg);
+  border: 1px solid var(--pgr-brand);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--pgr-text);
+}
+
+.button.primary {
+  color: var(--pgr-bg);
+  background: var(--pgr-brand);
+}
+
+.button.primary:hover {
+  background: var(--pgr-brand-dark);
+}
+
+.gate :focus-visible {
+  outline: 2px solid var(--pgr-focus);
+  outline-offset: 2px;
+}

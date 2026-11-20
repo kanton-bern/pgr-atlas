@@ -1,0 +1,20 @@
+[server]
+port = 8501
+address = "0.0.0.0"
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+# In MB; Streamlit's default is 200. The only uploader is the polygon upload,
+# and a one-polygon file or Shapefile bundle is normally under 5 MB.
+maxUploadSize = 10
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# An uncaught exception shows only its type and a generic message
+# in the browser. The message and traceback go to the log, so nothing like a
+# presigned S3 URL can reach the page. Local runs outside Docker keep "full".
+showErrorDetails = "type"
+
+# The theme and static file serving are the app's own: app/.streamlit/config.toml.

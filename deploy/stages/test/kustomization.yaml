@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: aw3-pgr-atlas-${stage}-apps
+resources:
+  - pgr-atlas
+  - s3-toolbox
+  # Alert rules only. The AlertmanagerConfig that
+  # mails them is applied by Bedag (deploy/applied-by-bedag/test/, applied
+  # 2026-10-07), not by Flux: Flux may not write it, and one refused object
+  # blocks the whole stage. If Flux turns not-Ready over "prometheusrules",
+  # comment this out again (docs/monitoring.md, section 6).
+  - monitoring
+labels:
+  - includeSelectors: true
+    pairs:
+      customer.gitops.bedag.ch/hlq: aw3
+      customer.gitops.bedag.ch/stage: test

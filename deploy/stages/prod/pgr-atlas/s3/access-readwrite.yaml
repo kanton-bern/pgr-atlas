@@ -1,0 +1,17 @@
+# Read-write key for the bucket, for the data transfer in the s3-toolbox. Same
+# as on test, where it was checked on 2026-10-05 (docs/s3.md, section 2): it
+# writes and overwrites but is refused on deletes. The operator writes it into
+# the Secret named in destinationSecret.
+apiVersion: s3.bedag.ch/v1alpha1
+kind: S3Access
+metadata:
+  name: pgr-datatransfer-rw
+spec:
+  s3BucketRef:
+    name: aw3-pgr-atlas-prod
+  policyRefs:
+    - kind: GlobalS3Policy
+      name: readwrite
+  connectionDetails:
+    mode: All
+    destinationSecret: s3-pgr-datatransfer-rw

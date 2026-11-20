@@ -1,0 +1,100 @@
+# Builds tools/proxy into the image ghcr.io/skerlakanalytics/pgr-atlas-proxy:
+# nginx with one config file, the app pod's single entry port (see tools/proxy/README.md).
+#
+# Tags, depending on what triggered the build:
+#   git tag proxy-vX.Y.Z pushed    -> :vX.Y.Z and :latest   releases: what the
+#                                                            stage values pin
+#   manual run on a branch         -> :<branch>              rolling: for trying a
+#     (Actions tab -> "Run workflow"; only offered once this file is on main)
+#
+# Separate from build-and-push.yml on purpose: the proxy has its own release
+# cycle, and pushes to main should not rebuild it. Its release tags start with
+# "proxy-", so they never match build-and-push.yml's "v*" (and app release
+# tags never match this one).
+#
+# Same build setup as build-and-push.yml (default docker driver, so a single
+# manifest without attestations -- see cleanup-images.yml for why that matters).
+name: Build and push proxy
+
+on:
+  push:
+    tags: ["proxy-v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/skerlakanalytics/pgr-atlas-proxy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # nothing below needs git credentials; don't leave the token in .git/config
+          persist-credentials: false
+
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        # Only GitHub's own GITHUB_REF_* variables, no ${{ }} expressions: a
+        # branch name is user-controlled and must not be pasted into the script.
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#proxy-}"
+            TAGS="${IMAGE}:${VERSION},${IMAGE}:latest"
+          else
+            # slashes in branch names are not valid in an image tag
+            SLUG=$(echo "$GITHUB_REF_NAME" | tr '/' '-')
+            TAGS="${IMAGE}:${SLUG}"
+            VERSION="${SLUG}-${GITHUB_SHA::7}"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Tags: ${TAGS}  Version: ${VERSION}"
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: tools/proxy
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            PROXY_VERSION=${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      # Known vulnerabilities in the image: its OS packages, Python packages
+      # and the binaries copied in. Fails, and so nothing is pushed, only for
+      # HIGH or CRITICAL findings that have a fixed version. Accepted findings
+      # go into .trivyignore, each with its reason. Trivy runs as a pinned
+      # image, like gitleaks in ci.yml.
+      - name: Scan the image (Trivy)
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$GITHUB_WORKSPACE/.trivyignore:/.trivyignore:ro" \
+            ghcr.io/aquasecurity/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa \
+            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --ignorefile /.trivyignore --exit-code 1 "${TAGS%%,*}"
+
+      - name: Push
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          for tag in ${TAGS//,/ }; do docker push "$tag"; done

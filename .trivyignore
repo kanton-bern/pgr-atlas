@@ -1,0 +1,4 @@
+# Findings the image scans accept: in the build workflows (build-and-push.yml,
+# build-s3tools.yml, build-proxy.yml) and in the weekly re-scan of the running
+# images (scan-images.yml). One CVE id per line, with a comment above it: why
+# it is accepted and when to look again.

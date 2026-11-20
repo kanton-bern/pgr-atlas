@@ -1,0 +1,81 @@
+# AppTest (tests/apptest): app.py run in-process, view by view, against the
+# adelboden-test bucket. It takes about 20 minutes on a runner, so it runs once
+# per release, not per pull request:
+#
+#   git tag vX.Y.Z pushed      -> that release
+#   manual run (Actions tab)   -> the branch or tag it is started on
+#   label "apptest" on a PR    -> that pull request, once
+#
+# The pull requests that then set the tag on a stage don't run it again: the
+# run for the tag is the check, so look at it before merging them.
+# Needs the repo secrets ADELBODEN_TEST_S3_ACCESS_KEY / ADELBODEN_TEST_S3_KEY_SECRET
+# and fails without them.
+name: AppTest
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  # Adding the label "apptest" to a pull request runs it once on that pull
+  # request (its merge with the base branch). New pushes don't run it again:
+  # remove the label and add it back for another run.
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+# Other labels added to the pull request get their own group, so they don't
+# cancel a run.
+concurrency:
+  group: apptest-${{ github.ref }}-${{ github.event.label.name || 'run' }}
+  cancel-in-progress: true
+
+jobs:
+  apptest:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'apptest'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check for the test bucket key
+        env:
+          ACCESS_KEY: ${{ secrets.ADELBODEN_TEST_S3_ACCESS_KEY }}
+        run: |
+          if [ -z "$ACCESS_KEY" ]; then
+            echo "::error::No ADELBODEN_TEST_S3_ACCESS_KEY here; AppTest can't run."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.19"
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: false
+
+      - name: Install app and dev dependencies (uv.lock)
+        run: uv sync --frozen
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+          package-manager-cache: false
+
+      # The app declares the built pages in app/<component>/dist/.
+      - name: Build the map components (frontend/)
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      # With its path: app.py runs in-process and probe-core reads its bucket at import.
+      - name: AppTest
+        env:
+          PROBE_S3_ACCESS_KEY_ID: ${{ secrets.ADELBODEN_TEST_S3_ACCESS_KEY }}
+          PROBE_S3_SECRET_ACCESS_KEY: ${{ secrets.ADELBODEN_TEST_S3_KEY_SECRET }}
+        run: pytest -m apptest tests/apptest --durations=25

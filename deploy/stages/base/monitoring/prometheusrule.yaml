@@ -1,0 +1,226 @@
+# Alert rules for the app, evaluated by Bedag's Prometheus (docs/monitoring.md).
+#
+# ${stage} is replaced by Flux; {{ $labels.x }} / {{ $value }} belong to
+# Prometheus and are left alone by Flux (checked with `flux build`).
+#
+# Rules labelled email="true" are the ones the AlertmanagerConfig's route sends
+# by mail (deploy/applied-by-bedag/). Every rule keeps the `namespace` label in
+# its result: the route groups the mails by it, one mail per stage.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pgr-atlas
+spec:
+  groups:
+    - name: pgr-atlas-${stage}
+      rules:
+        - alert: PgrAtlasUnavailable
+          expr: |
+            kube_statefulset_status_replicas_ready{namespace="aw3-pgr-atlas-${stage}-apps", statefulset="pgr-atlas-app"} < 1
+          # cold start (probe grace 5 min) + image pull stay below this
+          for: 10m
+          labels:
+            severity: critical
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: no ready pod"
+            description: |
+              StatefulSet pgr-atlas-app in {{ $labels.namespace }} has had no
+              ready pod for 10 minutes. The app is down for users.
+
+        # Fewer ready pods than the StatefulSet asks for, e.g. one pod that
+        # runs but fails its readiness probe: no restart, nothing waiting, so
+        # no other rule sees it. A rollout (one pod at a time, up to 5 min
+        # cold start each) stays below 30 minutes.
+        - alert: PgrAtlasPodsNotAllReady
+          expr: |
+            kube_statefulset_status_replicas_ready{namespace="aw3-pgr-atlas-${stage}-apps", statefulset="pgr-atlas-app"}
+            < on (namespace, statefulset)
+            kube_statefulset_replicas{namespace="aw3-pgr-atlas-${stage}-apps", statefulset="pgr-atlas-app"}
+          for: 30m
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: only {{ $value }} pod(s) ready"
+            description: |
+              StatefulSet pgr-atlas-app in {{ $labels.namespace }} has had fewer
+              ready pods than desired for 30 minutes. The app still answers,
+              with less capacity. kubectl get pods shows which pod is not ready.
+
+        # Every waiting reason, also ContainerCreating (e.g. the RWO spill PVC
+        # not attaching). kube-state-metrics emits the series only while the
+        # container waits. Both containers of the app pod: without its proxy
+        # (nginx, the pod's one entry port) a pod serves nothing.
+        - alert: PgrAtlasPodStuck
+          expr: |
+            max by (namespace, pod, container, reason) (
+              kube_pod_container_status_waiting_reason{namespace="aw3-pgr-atlas-${stage}-apps", container=~"app|proxy"}
+            ) == 1
+          # A cold start (image pull, ContainerCreating) waits a few minutes
+          for: 10m
+          labels:
+            severity: critical
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: {{ $labels.container }} in pod {{ $labels.pod }} is {{ $labels.reason }}"
+            description: |
+              The container has been waiting for 10 minutes.
+              ImagePullBackOff after a release usually means the tag in the
+              stage values was not built (yet). CrashLoopBackOff: see
+              kubectl logs --previous.
+
+        # kube-state-metrics emits ..._last_terminated_reason only after a
+        # restart. PgrAtlasRestarted fires for an OOM restart as well.
+        - alert: PgrAtlasOOMKilled
+          expr: |
+            (kube_pod_container_status_last_terminated_reason{namespace="aw3-pgr-atlas-${stage}-apps", container="app", reason="OOMKilled"} == 1)
+            and on (namespace, pod, container)
+            (increase(kube_pod_container_status_restarts_total{namespace="aw3-pgr-atlas-${stage}-apps", container="app"}[15m]) > 0)
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: {{ $labels.pod }} was OOM-killed"
+            description: |
+              The container hit its memory limit and was restarted. Usual
+              suspects: the catalog build on the first page load, a large raster.
+
+        # App and proxy container of the app pod.
+        - alert: PgrAtlasRestarted
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="aw3-pgr-atlas-${stage}-apps", container=~"app|proxy"}[15m]) > 0
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: {{ $labels.container }} in {{ $labels.pod }} restarted"
+            description: |
+              Liveness probe, watchdog exit or OOM. The reason is in
+              kubectl get pod {{ $labels.pod }} -o jsonpath='{.status.containerStatuses[*].lastState}'.
+
+        # The s3-toolbox runs the bucket copies; a restart ends them.
+        - alert: PgrAtlasToolboxRestarted
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="aw3-pgr-atlas-${stage}-apps", container="toolbox"}[15m]) > 0
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: s3-toolbox restarted"
+            description: |
+              {{ $labels.pod }} restarted. A copy that was running in it has
+              stopped and must be started again.
+
+        - alert: PgrAtlasMemoryHigh
+          expr: |
+            max by (namespace, pod) (container_memory_working_set_bytes{namespace="aw3-pgr-atlas-${stage}-apps", container="app"})
+            /
+            max by (namespace, pod) (kube_pod_container_resource_limits{namespace="aw3-pgr-atlas-${stage}-apps", container="app", resource="memory"})
+            > 0.9
+          for: 10m
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: memory above 90% of the limit"
+            description: |
+              {{ $labels.pod }} has used {{ $value | humanizePercentage }} of its
+              memory limit for 10 minutes. An OOM kill is likely next.
+
+        - alert: PgrAtlasSpillVolumeFull
+          expr: |
+            kubelet_volume_stats_used_bytes{namespace="aw3-pgr-atlas-${stage}-apps", persistentvolumeclaim=~"pgr-atlas-spill-.*"}
+            /
+            kubelet_volume_stats_capacity_bytes{namespace="aw3-pgr-atlas-${stage}-apps", persistentvolumeclaim=~"pgr-atlas-spill-.*"}
+            > 0.85
+          for: 30m
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: spill volume {{ $value | humanizePercentage }} full"
+            description: |
+              {{ $labels.persistentvolumeclaim }} (one pod's /tmp: DuckDB spill + raster work DB) is near
+              PROBE_DUCKDB_MAX_TEMP_SIZE. Either a large raster job is running
+              into its cap, or files were left behind (check du -sh /tmp/* in the pod).
+
+        # Phase Failed, not kube_pod_status_reason="Evicted": Bedag's metric
+        # allowlist drops the latter. An evicted pod ends up Failed.
+        - alert: PgrAtlasPodFailed
+          expr: |
+            max by (namespace, pod) (kube_pod_status_phase{namespace="aw3-pgr-atlas-${stage}-apps", pod=~"pgr-atlas-app-.*", phase="Failed"}) == 1
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: pod {{ $labels.pod }} failed"
+            description: |
+              Usually an eviction: an emptyDir over its 5Gi sizeLimit
+              (cache, work); kubectl get pod {{ $labels.pod }} shows
+              the reason. The failed pod object stays until it is deleted.
+
+        # A rule whose metric is gone returns nothing and never fires. This
+        # one fires instead: when the platform stops collecting a metric the
+        # rules above read, or when the app's objects are gone altogether.
+        # absent() keeps `namespace` from the matcher; label_replace names
+        # the metric for the mail.
+        - alert: PgrAtlasMetricsMissing
+          expr: |
+            label_replace(absent(kube_statefulset_status_replicas_ready{namespace="aw3-pgr-atlas-${stage}-apps", statefulset="pgr-atlas-app"}), "metric", "kube_statefulset_status_replicas_ready", "", "")
+            or
+            label_replace(absent(kube_pod_container_status_restarts_total{namespace="aw3-pgr-atlas-${stage}-apps", container="app"}), "metric", "kube_pod_container_status_restarts_total", "", "")
+            or
+            label_replace(absent(container_memory_working_set_bytes{namespace="aw3-pgr-atlas-${stage}-apps", container="app"}), "metric", "container_memory_working_set_bytes", "", "")
+            or
+            label_replace(absent(kubelet_volume_stats_used_bytes{namespace="aw3-pgr-atlas-${stage}-apps", persistentvolumeclaim=~"pgr-atlas-spill-.*"}), "metric", "kubelet_volume_stats_used_bytes", "", "")
+          for: 30m
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: no data for {{ $labels.metric }}"
+            description: |
+              Prometheus has had no {{ $labels.metric }} series for the app in
+              {{ $labels.namespace }} for 30 minutes. The alerts that read it
+              cannot fire. Either no app pod exists, or the metric is no
+              longer collected.
+
+        # The app's own metric (ServiceMonitor in this folder): the tile server
+        # of each pod checks S3 once a minute with the app's key. Fires when a
+        # pod's last check failed, or when its check has not run for 5 minutes
+        # (the timestamp stands still).
+        - alert: PgrAtlasS3Unreachable
+          expr: |
+            min by (namespace, pod) (pgr_atlas_s3_reachable{namespace="aw3-pgr-atlas-${stage}-apps"}) == 0
+            or
+            max by (namespace, pod) (time() - pgr_atlas_s3_last_check_timestamp_seconds{namespace="aw3-pgr-atlas-${stage}-apps"}) > 300
+          for: 5m
+          labels:
+            severity: critical
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: {{ $labels.pod }} cannot reach S3"
+            description: |
+              The app's S3 check has failed for 5 minutes: endpoint not
+              reachable, key refused or bucket gone. Users see an error
+              instead of data. The pod's log names the cause ("S3 check").
+              All pods at once: S3 or the key; one pod: that pod.
+
+        # Without the metric the rule above can never fire: the ServiceMonitor
+        # is not read, the app is older than the S3 check (v0.8.9), or no pod
+        # is ready.
+        - alert: PgrAtlasS3MetricMissing
+          expr: |
+            absent(pgr_atlas_s3_reachable{namespace="aw3-pgr-atlas-${stage}-apps"})
+          for: 30m
+          labels:
+            severity: warning
+            email: "true"
+          annotations:
+            summary: "PGR Atlas ${stage}: no S3 check metric"
+            description: |
+              Prometheus has had no pgr_atlas_s3_reachable series from
+              {{ $labels.namespace }} for 30 minutes, so an S3 outage would
+              not be alerted. Check the ServiceMonitor pgr-atlas-app and
+              /pmtiles-data/metrics of a pod.

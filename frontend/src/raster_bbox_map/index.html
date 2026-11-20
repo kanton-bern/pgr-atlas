@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* View-specific styles; the shared chrome is in shared/map-controls.css. */
+
+      /* Variable switch of a mode B job (overlays.ts): its own box below the
+       top-left stack, shown only for more than one variable. */
+      #var-switch {
+        position: absolute;
+        top: 145px;
+        left: 10px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--mc-font);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        border: 2px solid var(--pgr-brand);
+      }
+      .var-switch-title {
+        font-size: var(--mc-title-size);
+        font-weight: 700;
+        color: var(--pgr-text);
+        margin-bottom: 2px;
+      }
+      /* <button>s that look like list rows. */
+      .var-btn {
+        display: block;
+        width: 100%;
+        padding: 6px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        font-size: var(--mc-body-size);
+        font-weight: 600;
+        color: var(--pgr-text);
+        transition: background 0.12s;
+      }
+      .var-btn:hover {
+        background: #f0f0f0;
+      }
+      .var-btn.active {
+        background: var(--pgr-brand);
+        color: #fff;
+      }
+      /* Colour scale, bottom centre like the other legends; hidden until there
+       is a raster or a Raster-Derivate layer. */
+      #raster-legend {
+        position: absolute;
+        bottom: 34px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: var(--mc-bg);
+        border-radius: 9px;
+        padding: 10px 26px 9px 16px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+        min-width: 280px;
+        font-family: var(--mc-font);
+        user-select: none;
+      }
+      #raster-legend .rl-title {
+        font-size: var(--mc-title-size);
+        font-weight: 700;
+        color: var(--pgr-text);
+        margin-bottom: 6px;
+      }
+      #raster-legend .rl-bar {
+        height: 16px;
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+      }
+      #raster-legend .rl-ticks {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        row-gap: 2px;
+        font-size: var(--mc-body-size);
+        color: #333;
+        margin-top: 4px;
+        font-weight: 600;
+      }
+      #raster-legend .rl-note {
+        font-size: 10px;
+        color: var(--pgr-text-muted);
+        margin-top: 2px;
+        text-align: center;
+      }
+      /* Follows the pointer; pointer-events: none so it never blocks the
+       mousemove it follows. */
+      #pixel-tooltip {
+        position: absolute;
+        z-index: 20;
+        pointer-events: none;
+        background: rgba(26, 36, 36, 0.92);
+        color: #fff;
+        padding: 4px 9px;
+        border-radius: 5px;
+        font-family: var(--mc-font);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="tl-stack">
+      <div id="legend">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="legend"
+          data-open-label="layers"
+        >
+          ✕
+        </button>
+        <!-- data-text names the label each element shows (the labels render arg). -->
+        <div class="mc-ctrl-title" data-text="layers"></div>
+        <label class="legend-row">
+          <input type="checkbox" id="gold-toggle" />
+          <div class="legend-dot legend-dot--gold"></div>
+          <span data-text="gold_coverage"></span>
+        </label>
+        <label class="legend-row">
+          <input type="checkbox" id="prozessquelle-toggle" />
+          <div class="legend-dot legend-dot--prozessquelle"></div>
+          <span data-text="prozessquellen"></span>
+        </label>
+        <!-- The raster's row and opacity slider (shared/layer-box.ts). -->
+        <div id="layer-rows"></div>
+      </div>
+      <div id="draw-ctrl">
+        <button type="button" id="draw-btn" aria-pressed="false" data-text="draw_rect"></button>
+        <button
+          type="button"
+          id="draw-poly-btn"
+          aria-pressed="false"
+          data-text="draw_polygon"
+        ></button>
+        <button type="button" id="clear-btn" data-text="draw_clear" hidden></button>
+        <div id="bbox-readout"></div>
+      </div>
+    </div>
+    <div id="var-switch" hidden></div>
+    <div id="raster-legend" hidden>
+      <button type="button" class="legend-close" data-close-target="raster-legend">✕</button>
+      <div class="rl-title" id="rl-title"></div>
+      <div class="rl-bar" id="rl-bar"></div>
+      <div class="rl-ticks" id="rl-ticks">
+        <span id="rl-min"></span><span id="rl-mid"></span><span id="rl-max"></span>
+      </div>
+      <div class="rl-note" id="rl-note"></div>
+    </div>
+    <div id="pixel-tooltip" hidden></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

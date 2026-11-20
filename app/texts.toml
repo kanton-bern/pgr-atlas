@@ -1,0 +1,2234 @@
+# The texts of PGR-Atlas, German (de) and French (fr).
+#
+# Edit only the text in quotes after `de =` or `fr =`. Keep every {placeholder}
+# exactly as it is; the app fills it in. An empty `fr = ""` shows the German text.
+# `note` explains the text for the translator. How to change a text, step by step:
+# docs/texts-guide.md
+
+# ── App ─────────────────────────────────────────────────────────────────────
+
+[app.topic]
+note = "The process the app is about, shown after the app name in the accent colour."
+de = "Hangmuren"
+fr = "Coulées de boue de versant"
+
+[app.title]
+note = "The browser tab title: the app name, then app.topic."
+de = "{app_name} {topic}"
+fr = "{app_name} {topic}"
+
+[app.version]
+note = "Footer of the sidebar, first line."
+de = "Version {version}"
+fr = "Version {version}"
+
+[app.data_source]
+note = "Footer of the sidebar, second line: which data the app reads."
+de = "Daten: {source} - Bucket {bucket}"
+fr = "Données : {source} - Bucket {bucket}"
+
+[app.version_unknown]
+note = "Shown as the version when it can't be read."
+de = "unbekannt"
+fr = "inconnue"
+
+[app.warning]
+note = "A message shown with the app's warning sign in front."
+de = "⚠️ {text}"
+fr = "⚠️ {text}"
+
+[app.download_button]
+note = "A download button's label: what, file format and size, e.g. \"📥 Fliesstiefe [m] (GeoTIFF, 41 kB)\"."
+de = "📥 {label} ({file_format}, {size})"
+fr = "📥 {label} ({file_format}, {size})"
+
+[app.downloads_cue]
+note = "Small floating button at the bottom right of the map that scrolls the page down to the downloads below it. An arrow is shown in front of it, so keep it short."
+de = "Zu den Downloads"
+fr = "Aux téléchargements"
+
+# ── Start der App ───────────────────────────────────────────────────────────
+
+[startup.status]
+de = "Initialisiere…"
+fr = "Initialisation…"
+
+[startup.manifest]
+de = "Lade Daten…"
+fr = "Chargement des données…"
+
+[startup.manifest_done]
+de = "✓ {anriss_count} Anrisse, {pq_count} Prozessquellen, {area_count} Grössenklassen"
+fr = "✓ {anriss_count} zones de déclenchement, {pq_count} sources de processus, {area_count} classes de taille"
+
+[startup.sim_count]
+de = "Zähle geplante Simulationen…"
+fr = "Comptage des simulations prévues…"
+
+[startup.sim_count_done]
+de = "✓ {sim_count} geplante Simulationen"
+fr = "✓ {sim_count} simulations prévues"
+
+[startup.gold]
+de = "Suche berechnete Kacheln (S3)…"
+fr = "Recherche des tuiles calculées (S3)…"
+
+[startup.gold_progress]
+de = "Registriere neue berechnete Kacheln (S3)… {done}/{total}"
+fr = "Enregistrement des nouvelles tuiles calculées (S3)… {done}/{total}"
+
+[startup.gold_done]
+de = "✓ {done} / {total} berechnete Kacheln ({new} neu indexiert)"
+fr = "✓ {done} / {total} tuiles calculées ({new} nouvellement indexées)"
+
+[startup.gold_coverage]
+de = "Zähle Anrisse mit Daten…"
+fr = "Comptage des zones de déclenchement avec données…"
+
+[startup.gold_coverage_done]
+de = "✓ {anriss_count} Anrisse mit Simulationsdaten verfügbar"
+fr = "✓ {anriss_count} zones de déclenchement avec données de simulation disponibles"
+
+[startup.pmtiles]
+de = "Starte PMTiles-Server…"
+fr = "Démarrage du serveur PMTiles…"
+
+[startup.raster_server]
+de = "Starte Raster-Server…"
+fr = "Démarrage du serveur raster…"
+
+[startup.server_done]
+note = "{name} is the server's name from startup.pmtiles or startup.raster_server."
+de = "✓ {name} auf Port {port}"
+fr = "✓ {name} sur le port {port}"
+
+[startup.no_credentials]
+de = "Die Zugangsdaten für den Datenspeicher (S3) fehlen. Die App kann keine Daten laden. Bitte den Betrieb informieren."
+fr = "Les identifiants d’accès au stockage de données (S3) sont manquants. L’application ne peut pas charger de données. Veuillez informer l’exploitation."
+
+[startup.s3_error]
+de = "Der Datenspeicher (S3) ist mit den hinterlegten Zugangsdaten nicht erreichbar. Bitte den Betrieb informieren; Details stehen im Log."
+fr = "Le stockage de données (S3) est inaccessible avec les identifiants enregistrés. Veuillez informer l’exploitation ; les détails figurent dans le journal."
+
+# ── Navigation ──────────────────────────────────────────────────────────────
+
+[nav.overview]
+note = "The view names in the sidebar; also the title of each view. No emoji."
+de = "Simulierte Ereignisse"
+fr = "Événements simulés"
+
+[nav.ifk]
+de = "IFK-Berechnung"
+fr = "Calcul CIF"
+
+[nav.raster_karten]
+de = "Raster-Karten (ad hoc)"
+fr = "Cartes raster (ad hoc)"
+
+[nav.raster_derivate]
+de = "Raster-Derivate"
+fr = "Dérivés raster"
+
+[nav.anriss]
+de = "Anriss"
+fr = "Zone de déclenchement"
+
+[nav.anriss_id]
+note = 'The open Anriss in the navigation and as its page title, e.g. "Anriss 977441". {page} is nav.anriss.'
+de = "{page} {id}"
+fr = "{page} {id}"
+
+[nav.gebaeudeschatten]
+de = "Gebäudeschatten"
+fr = "Ombre des bâtiments"
+
+# ── Hinweis vor dem Download ────────────────────────────────────────────────
+
+[download_gate.title]
+note = "Heading of the dialog shown before the first download of a browser tab."
+de = "Hinweise zu den Simulationsdaten"
+fr = "Remarques sur les données de simulation"
+
+[download_gate.statement]
+note = 'The sentence the user accepts. Keep exactly one [bracket pair] around the phrase that links to the Rechtliches page, also in French.'
+de = "Ich habe die [Hinweise zu den Simulationsdaten] gelesen und akzeptiere sie"
+fr = "J’ai lu les [remarques sur les données de simulation] et je les accepte"
+
+[download_gate.accept]
+note = "Button that accepts the notice and starts the download."
+de = "Akzeptieren"
+fr = "Accepter"
+
+[download_gate.decline]
+note = "Button that closes the dialog and cancels the download."
+de = "Ablehnen"
+fr = "Refuser"
+
+# ── Fusszeile und rechtliche Seiten ─────────────────────────────────────────
+
+[footer.copyright]
+note = "Footer line at the left."
+de = "© Kanton Bern"
+fr = "© Canton de Berne"
+
+[footer.working_group]
+note = "Footer link to the canton's natural hazards working group (external site)."
+de = "Arbeitsgruppe Naturgefahren des Kantons Bern"
+fr = "Groupe de travail Dangers naturels du canton de Berne"
+
+[footer.contact]
+note = "Footer link to the Kontakt page; also that page's browser-tab title."
+de = "Kontakt"
+fr = "Contact"
+
+[footer.imprint]
+note = "Footer link to the Impressum page; also that page's browser-tab title."
+de = "Impressum"
+fr = "Impressum"
+
+[footer.legal]
+note = "Footer link to the Rechtliches page; also that page's browser-tab title."
+de = "Rechtliches"
+fr = "Mentions légales"
+
+[footer.close]
+note = "Label of the cross at the top right of Kontakt, Impressum and Rechtliches; closes the page and returns to the previous view."
+de = "Seite schliessen"
+fr = "Fermer la page"
+
+# ── Kopfzeile der Ansichten ─────────────────────────────────────────────────
+
+[header.overview_hint]
+note = "The page header: the view's title is its nav label, then one line of instruction (the hints), and chips for what is selected."
+de = "Hineinzoomen und auf einen Kreis klicken; im Popup öffnet «Anriss öffnen» die Anriss-Ansicht mit den Simulationsresultaten."
+fr = "Zoomer et cliquer sur un cercle ; dans la fenêtre, « Ouvrir la zone de déclenchement » affiche la vue avec les résultats de simulation."
+
+[header.ifk_hint]
+de = "Auf einen Pixel klicken (das 5×5 m Raster erscheint beim Hineinzoomen) oder ein Gebiet zeichnen, um die Intensitäts-Frequenz-Kurven (IFK) zu berechnen; die Kreise sind die beitragenden Anrisse."
+fr = "Cliquer sur un pixel (la grille de 5×5 m apparaît au zoom) ou dessiner une zone pour calculer les courbes intensité-fréquence (CIF) ; les cercles sont les zones de déclenchement contributrices."
+
+[header.raster_hint]
+de = "Gebiet auf der Karte zeichnen oder in der Seitenleiste hochladen, Parameter wählen und «Raster erzeugen» klicken."
+fr = "Dessiner une zone sur la carte ou la téléverser dans la barre latérale, choisir les paramètres et cliquer sur « Générer le raster »."
+
+[header.derivate_hint]
+de = "Vorberechnete Raster für den ganzen Kanton herunterladen, oder für ein Gebiet, das auf der Karte gezeichnet wird. Ohne Experten-Modus."
+fr = "Télécharger les rasters précalculés pour tout le canton, ou pour une zone dessinée sur la carte. Sans mode expert."
+
+[header.anriss_hint]
+de = "Szenario in der Seitenleiste wählen; die Karte zeigt seine Pixel und die Umhüllende aller Szenarien."
+fr = "Choisir un scénario dans la barre latérale ; la carte affiche ses pixels et l’enveloppe de tous les scénarios."
+
+[header.gs_hint]
+de = "Klick auf ein Gebäude zeigt seinen Schatten; Klick daneben (oder Shift-Klick) zeigt, welche Gebäude diesen Pixel abschatten."
+fr = "Un clic sur un bâtiment affiche son ombre ; un clic à côté (ou Maj + clic) affiche les bâtiments qui ombragent ce pixel."
+
+[header.chip_expert]
+de = "Experten-Modus aktiv"
+fr = "Mode expert actif"
+
+[header.chip_pixel]
+note = "The chip of a selected pixel, in LV95 coordinates: \"Pixel 2'598'502.5 / 1'137'502.5\"."
+de = "Pixel {e} / {n}"
+fr = "Pixel {e} / {n}"
+
+[header.chip_area]
+note = 'The chip of a selected area, e.g. "Gebiet: Rechteck".'
+de = "Gebiet: {shape}"
+fr = "Zone : {shape}"
+
+[header.chip_building]
+de = "Gebäude {id}"
+fr = "Bâtiment {id}"
+
+# ── Simulierte Ereignisse ───────────────────────────────────────────────────
+
+[overview.stats_summary]
+note = "The Datenstand's one line in the Simulierte Ereignisse header. {state} is overview.stats_complete or overview.stats_incomplete."
+de = "Datenstand · {state}"
+fr = "État des données · {state}"
+
+[overview.stats_caption]
+note = "{date} is the day the newest finished Kachel was written."
+de = "Stand vom {date}. Vergleich mit dem geplanten Umfang für den ganzen Kanton Bern."
+fr = "État au {date}. Comparaison avec le volume prévu pour tout le canton de Berne."
+
+[overview.stats_caption_undated]
+note = "As overview.stats_caption, when no Kachel is finished yet."
+de = "Vergleich mit dem geplanten Umfang für den ganzen Kanton Bern."
+fr = "Comparaison avec le volume prévu pour tout le canton de Berne."
+
+[overview.stats_complete]
+de = "vollständig"
+fr = "complet"
+
+[overview.stats_incomplete]
+de = "unvollständig"
+fr = "incomplet"
+
+[overview.stats_partial]
+note = "The line under an incomplete count, e.g. \"von 7'960 (32.4 %)\"; it reads on from the count shown above it."
+de = "von {total} ({percent} %)"
+fr = "sur {total} ({percent} %)"
+
+[overview.metric_anrisse]
+de = "Anrisse"
+fr = "Zones de déclenchement"
+
+[overview.metric_areas]
+de = "Grössenklassen"
+fr = "Classes de taille"
+
+[overview.metric_pq]
+de = "Prozessquellen"
+fr = "Sources de processus"
+
+[overview.metric_sims]
+de = "Simulationen"
+fr = "Simulations"
+
+[overview.metric_kacheln]
+de = "Kacheln (1 km²)"
+fr = "Tuiles (1 km²)"
+
+[overview.bad_viewport_link]
+de = "Der Link enthält keine gültige Kartenansicht (z = Zoomstufe 7-19, lat/lon im Kanton Bern). Die Karte startet mit der gewohnten Ansicht."
+fr = "Le lien ne contient pas de vue cartographique valide (z = niveau de zoom 7-19, lat/lon dans le canton de Berne). La carte démarre avec la vue habituelle."
+
+[overview.pmtiles_missing]
+de = "Das Tileset der Karte «Simulierte Ereignisse» fehlt auf S3 (s3://{bucket}/{filename}). Die Karte zeigt deshalb keine Anrisse. Bitte den Betreiber der Anwendung informieren."
+fr = "Le jeu de tuiles de la carte « Événements simulés » est absent de S3 (s3://{bucket}/{filename}). La carte n’affiche donc aucune zone de déclenchement. Veuillez informer l’exploitant de l’application."
+
+# ── Anriss-ID suchen ────────────────────────────────────────────────────────
+
+[lookup.label]
+de = "Anriss-ID"
+fr = "ID de la zone de déclenchement"
+
+[lookup.placeholder]
+de = "Anriss-ID eingeben…"
+fr = "Saisir l’ID…"
+
+[lookup.submit]
+de = "Anriss öffnen"
+fr = "Ouvrir la zone de déclenchement"
+
+[lookup.unknown]
+note = "The error for an Anriss-ID that doesn't exist."
+de = "Anriss {id} nicht im Manifest."
+fr = "Zone de déclenchement {id} absente du manifeste."
+
+# ── IFK-Berechnung ──────────────────────────────────────────────────────────
+
+[ifk.deselect]
+de = "← Pixel abwählen"
+fr = "← Désélectionner le pixel"
+
+[ifk.spinner]
+de = "Lade IFK-Daten…"
+fr = "Chargement des données CIF…"
+
+[ifk.expert_warning]
+de = "🔬 **Experten-Modus aktiv** - diese Kurven verwenden angepasste Wahrscheinlichkeiten und sind **nicht offiziell**. Die graue Linie zeigt zum Vergleich die Original-Kurve."
+fr = "🔬 **Mode expert actif** - ces courbes utilisent des probabilités modifiées et ne sont **pas officielles**. La ligne grise montre la courbe d’origine pour comparaison."
+
+[ifk.no_data]
+de = "Keine Daten"
+fr = "Aucune donnée"
+
+[ifk.axis_return_period]
+de = "Wiederkehrperiode [Jahre]"
+fr = "Période de retour [ans]"
+
+[ifk.tooltip_return_period]
+de = "T [Jahre]"
+fr = "T [ans]"
+
+[ifk.tooltip_series]
+de = "Kurve"
+fr = "Courbe"
+
+[ifk.series_expert]
+note = "The two curves of an Experten-Modus chart: the overridden one and the production one."
+de = "Experten-Modus"
+fr = "Mode expert"
+
+[ifk.series_original]
+de = "Original"
+fr = "Origine"
+
+[ifk.curve_csv]
+de = "📥 Daten (CSV)"
+fr = "📥 Données (CSV)"
+
+[ifk.curve_png]
+de = "📥 Bild (PNG)"
+fr = "📥 Image (PNG)"
+
+[ifk.rohdaten]
+de = "📥 Rohdaten (CSV) - alle Ereignisse für diesen Pixel"
+fr = "📥 Données brutes (CSV) - tous les événements pour ce pixel"
+
+[ifk.bad_pixel_link]
+de = "Der Link enthält keinen gültigen Pixel (x/y = LV95-Koordinaten in Metern, im Kanton Bern)."
+fr = "Le lien ne contient pas de pixel valide (x/y = coordonnées LV95 en mètres, dans le canton de Berne)."
+
+[ifk.summary_pixel]
+note = "The row above a pixel's three curves: what the result covers."
+de = "**Pixel (LV95)** {e} / {n}"
+fr = "**Pixel (LV95)** {e} / {n}"
+
+[ifk.summary_anrisse_one]
+note = "As ifk.summary_anrisse, for exactly one Anriss."
+de = "**1** beitragender Anriss"
+fr = "**1** zone de déclenchement contributrice"
+
+[ifk.summary_anrisse]
+de = "**{count}** beitragende Anrisse"
+fr = "**{count}** zones de déclenchement contributrices"
+
+[ifk.summary_return_period]
+note = "From a million years on, {years} is a power of ten, as in the raster legends."
+de = "Höchste Wiederkehrperiode **{years} Jahre**"
+fr = "Période de retour maximale **{years} ans**"
+
+[ifk.summary_return_period_help]
+de = "Die Wiederkehrperiode der seltensten Intensität, die am Pixel simuliert wurde (über alle drei Kurven): bis dahin reichen die Kurven."
+fr = "La période de retour de l’intensité la plus rare simulée au pixel (sur les trois courbes) : les courbes vont jusque-là."
+
+[ifk.summary_copy_link]
+de = "🔗 Link kopieren"
+fr = "🔗 Copier le lien"
+
+[ifk.summary_link_copied]
+de = "Link kopiert"
+fr = "Lien copié"
+
+[ifk.summary_copy_failed]
+de = "Kopieren nicht möglich - der Link steht in der Adresszeile."
+fr = "Copie impossible - le lien figure dans la barre d’adresse."
+
+[ifk.no_process]
+note = "A pixel in a finished Kachel that no simulated process reaches."
+de = "Kein simulierter Prozess erreicht Pixel ({x}, {y})."
+fr = "Aucun processus simulé n’atteint le pixel ({x}, {y})."
+
+[ifk.no_kachel]
+note = "A pixel outside every finished Kachel."
+de = "Keine berechnete Kachel für Pixel ({x}, {y}) gefunden (noch nicht fertiggestellt oder ausserhalb des Simulationsgebiets)."
+fr = "Aucune tuile calculée trouvée pour le pixel ({x}, {y}) (pas encore terminée ou hors de la zone de simulation)."
+
+[ifk.error]
+note = "After a failure whose details went to the log."
+de = "Die IFK-Berechnung ist fehlgeschlagen. Bitte später erneut versuchen; bleibt der Fehler, bitte melden."
+fr = "Le calcul CIF a échoué. Veuillez réessayer plus tard ; si l’erreur persiste, veuillez la signaler."
+
+# ── IFK eines Gebiets ───────────────────────────────────────────────────────
+
+[ifk_area.submit]
+de = "▶️ IFK des Gebiets berechnen"
+fr = "▶️ Calculer la CIF de la zone"
+
+[ifk_area.spinner]
+de = "Berechne IFK des Gebiets…"
+fr = "Calcul de la CIF de la zone…"
+
+[ifk_area.rule]
+de = "**IFK des Gebiets** - jede Simulation zählt einmal, mit ihrer grössten Intensität über alle Pixel im Gebiet (Fliesstiefe, Fliessgeschwindigkeit und Druck je für sich). Die Kurven zeigen also, wie oft das Gebiet irgendwo mindestens so stark getroffen wird."
+fr = "**CIF de la zone** - chaque simulation compte une fois, avec son intensité maximale sur tous les pixels de la zone (hauteur d’écoulement, vitesse d’écoulement et pression chacune séparément). Les courbes indiquent donc à quelle fréquence la zone est touchée, quelque part, au moins aussi fortement."
+
+[ifk_area.no_process]
+de = "Kein simulierter Prozess erreicht das Gebiet."
+fr = "Aucun processus simulé n’atteint la zone."
+
+[ifk_area.aborted]
+de = "⏹️ IFK-Berechnung abgebrochen."
+fr = "⏹️ Calcul CIF interrompu."
+
+[ifk_area.bad_link]
+de = "Der Link enthält kein gültiges Rechteck (xmin/ymin/xmax/ymax = LV95-Koordinaten in Metern, im Kanton Bern)."
+fr = "Le lien ne contient pas de rectangle valide (xmin/ymin/xmax/ymax = coordonnées LV95 en mètres, dans le canton de Berne)."
+
+[ifk_area.partly_outside]
+note = "The selected area reaches beyond the finished Kacheln."
+de = "Das Gebiet liegt teilweise ausserhalb der berechneten Kacheln ({n_missing} von {n_kacheln} km² Kacheln ohne Daten) - die Kurven decken nur den berechneten Teil ab."
+fr = "La zone dépasse en partie les tuiles calculées ({n_missing} tuiles de km² sur {n_kacheln} sans données) - les courbes ne couvrent que la partie calculée."
+
+[ifk_area.rohdaten]
+note = "{file_format} is CSV or Parquet."
+de = "📥 Rohdaten ({file_format}) - alle {n_ereignisse} Ereignisse für dieses Gebiet"
+fr = "📥 Données brutes ({file_format}) - les {n_ereignisse} événements de cette zone"
+
+# ── Experten-Modus ──────────────────────────────────────────────────────────
+
+[expert.toggle]
+de = "🔬 Experten-Modus"
+fr = "🔬 Mode expert"
+
+[expert.toggle_help]
+de = 'Überschreibt probabilistische Annahmen ad-hoc für diese Sitzung (p_h/Anrissmächtigkeit, p_Ablauf/μ-ξ-τ₀, pro-Anriss-Faktoren). Wirkt auf IFK-Berechnung und Ad-Hoc Raster Karten. Nichts wird gespeichert oder in der Produktion verwendet - nur zum Testen "was wäre wenn"-Szenarien. Beta.'
+fr = "Remplace des hypothèses probabilistes de façon ad hoc pour cette session (p_h/épaisseur de déclenchement, p_Ablauf/μ-ξ-τ₀, facteurs par zone de déclenchement). Agit sur le calcul CIF et les cartes raster ad hoc. Rien n’est enregistré ni utilisé en production - uniquement pour tester des scénarios « et si ». Bêta."
+
+[expert.beta_note]
+note = "{contact} is the address for feedback on the app."
+de = "⚠️ **Beta-Feature.** Angepasste Wahrscheinlichkeiten - Ergebnisse sind **nicht offiziell**. Die Wahrscheinlichkeiten werden nicht gespeichert. Feedback an {contact}."
+fr = "⚠️ **Fonction bêta.** Probabilités modifiées - les résultats ne sont **pas officiels**. Les probabilités ne sont pas enregistrées. Commentaires à {contact}."
+
+[expert.p_h_expander]
+note = "h is the Anrissmächtigkeit (the simulated thickness); p_h weights the two h scenarios (mean, max)."
+de = "p_h (Szenario der Anrissmächtigkeit h)"
+fr = "p_h (scénario d’épaisseur de déclenchement h)"
+
+[expert.p_h_intro]
+de = "Die beiden Werte ergeben zusammen 1. Wird ein Regler verschoben, passt sich der andere automatisch an."
+fr = "Les deux valeurs totalisent 1. Si l’on déplace un curseur, l’autre s’adapte automatiquement."
+
+[expert.p_h_caption]
+note = "The production split of the two h scenarios."
+de = "Standard: p_h (mean) = {mean} | p_h (max) = {max}"
+fr = "Par défaut : p_h (mean) = {mean} | p_h (max) = {max}"
+
+[expert.p_h_mean_slider]
+de = "p_h (mean)"
+fr = "p_h (mean)"
+
+[expert.p_h_max_slider]
+de = "p_h (max)"
+fr = "p_h (max)"
+
+[expert.p_h_reset]
+de = "↺ p_h zurücksetzen"
+fr = "↺ Réinitialiser p_h"
+
+[expert.ablauf_expander]
+de = "p_Ablauf (μ/ξ/τ₀)"
+fr = "p_Ablauf (μ/ξ/τ₀)"
+
+[expert.ablauf_zero_heading]
+de = "**Zeilen gruppenweise auf Null setzen**"
+fr = "**Mettre des lignes à zéro par groupe**"
+
+[expert.ablauf_zero_param]
+de = "Parameter"
+fr = "Paramètre"
+
+[expert.ablauf_zero_value]
+de = "Wert"
+fr = "Valeur"
+
+[expert.ablauf_zero_button]
+de = "Auf Null setzen"
+fr = "Mettre à zéro"
+
+[expert.ablauf_normalize]
+de = "🔄 Normalisieren"
+fr = "🔄 Normaliser"
+
+[expert.ablauf_reset]
+de = "↺ Zurücksetzen"
+fr = "↺ Réinitialiser"
+
+[expert.ablauf_sum_ok]
+de = "✅ Summe p_Ablauf = {total}"
+fr = "✅ Somme p_Ablauf = {total}"
+
+[expert.ablauf_sum_invalid]
+de = "⚠️ Summe p_Ablauf = {total} (muss 1.0 sein - wird bis dahin ignoriert, Standardwerte bleiben aktiv)."
+fr = "⚠️ Somme p_Ablauf = {total} (doit valoir 1,0 - ignorée d’ici là, les valeurs par défaut restent actives)."
+
+[expert.anriss_heading]
+de = "**🔬 Experten-Modus: Anriss-Faktoren überschreiben** (nur für die hier beitragenden Anrisse)"
+fr = "**🔬 Mode expert : remplacer les facteurs des zones de déclenchement** (uniquement pour les zones contributrices ici)"
+
+[expert.config_download]
+de = "📥 Wahrscheinlichkeiten/Raten"
+fr = "📥 Probabilités/taux"
+
+# ── Raster-Karten (ad hoc) ──────────────────────────────────────────────────
+
+[raster.mode]
+de = "Modus"
+fr = "Mode"
+
+[raster.mode_option.a]
+note = "Keep it short: the select box cuts off longer values. The input below it shows what the mode holds fixed."
+de = "Wiederkehrperiode"
+fr = "Période de retour"
+
+[raster.mode_option.b]
+de = "Intensität"
+fr = "Intensité"
+
+[raster.variable]
+de = "Variable"
+fr = "Variable"
+
+[raster.mode_b_note]
+de = "ℹ️ Dieser Modus berechnet Fliesstiefe, Fliessgeschwindigkeit und Druck immer gemeinsam - nach der Berechnung auf der Karte oben links zwischen den drei Ebenen wechseln."
+fr = "ℹ️ Ce mode calcule toujours ensemble la hauteur d’écoulement, la vitesse d’écoulement et la pression - après le calcul, basculer entre les trois couches en haut à gauche de la carte."
+
+[raster.submit]
+de = "▶️ Raster erzeugen"
+fr = "▶️ Générer le raster"
+
+[raster.estimate]
+de = "⏱️ geschätzt ~{duration}"
+fr = "⏱️ estimé ~{duration}"
+
+[raster.too_many_kacheln]
+de = "⚠️ Zu gross: {area_km2} km² in {n_kacheln} km² Kacheln (Maximum für dieses System: {max_kacheln} km² Kacheln). Kleineres Gebiet zeichnen. Kacheln richten sich nach dem umschliessenden Rechteck, nicht der genauen Polygonform - ein schmales/lang gestrecktes Polygon kann trotz kleiner Fläche viele Kacheln umfassen."
+fr = "⚠️ Trop grand : {area_km2} km² dans {n_kacheln} tuiles de km² (maximum pour ce système : {max_kacheln} tuiles de km²). Dessiner une zone plus petite. Les tuiles suivent le rectangle englobant, pas la forme exacte du polygone - un polygone étroit/allongé peut couvrir beaucoup de tuiles malgré sa petite surface."
+
+[raster.too_many_rows]
+de = "⚠️ Zu viele Daten: geschätzt {est_mio} Mio. Simulationspixel, Maximum {max_mio} Mio. (Rechenzeit sonst über {duration}). Kleineres Gebiet zeichnen."
+fr = "⚠️ Trop de données : environ {est_mio} mio de pixels de simulation estimés, maximum {max_mio} mio (temps de calcul sinon supérieur à {duration}). Dessiner une zone plus petite."
+
+[raster.no_pixels]
+de = "Keine Pixel erfüllen die gewählten Kriterien in diesem Gebiet - kein Raster erzeugt."
+fr = "Aucun pixel ne remplit les critères choisis dans cette zone - aucun raster généré."
+
+[raster.expert_warning]
+note = "{contact} is the address for feedback on the app."
+de = "🔬 **Experten-Modus aktiv (Beta)** - dieses Raster verwendet angepasste Wahrscheinlichkeiten und ist **nicht offiziell** (siehe GeoTIFF-Tags). Feedback an {contact}."
+fr = "🔬 **Mode expert actif (bêta)** - ce raster utilise des probabilités modifiées et n’est **pas officiel** (voir les balises GeoTIFF). Commentaires à {contact}."
+
+[raster.aborted]
+de = "⏹️ Raster-Berechnung abgebrochen."
+fr = "⏹️ Calcul du raster interrompu."
+
+[raster.error]
+note = "After a failure whose details went to the log."
+de = "Die Raster-Berechnung ist fehlgeschlagen. Bitte später erneut versuchen; bleibt der Fehler, bitte melden."
+fr = "Le calcul du raster a échoué. Veuillez réessayer plus tard ; si l’erreur persiste, veuillez la signaler."
+
+[raster.done]
+de = "{n_rasters} Raster erzeugt. Download unten:"
+fr = "{n_rasters} raster(s) généré(s). Téléchargement ci-dessous :"
+
+[raster.download_file]
+de = "Datei: {name}"
+fr = "Fichier : {name}"
+
+# ── Berechnungen im Hintergrund ─────────────────────────────────────────────
+
+[job.starting]
+de = "Starte…"
+fr = "Démarrage…"
+
+[job.kachel]
+note = "Progress of a running job: {n} is the kachel in progress, {total} how many there are. Also the {step} of job.aborting."
+de = "Kachel {n}/{total}"
+fr = "Tuile {n}/{total}"
+
+[job.writing]
+note = "Progress of a running job once every kachel is read: the result file is written. Also the {step} of job.aborting."
+de = "Schreibe Ergebnis…"
+fr = "Écriture du résultat…"
+
+[job.queued]
+de = "⏳ In der Warteschlange: eine andere Berechnung läuft gerade. Ihre Berechnung startet automatisch, sobald diese fertig ist."
+fr = "⏳ En file d’attente : un autre calcul est en cours. Le vôtre démarrera automatiquement dès que celui-ci sera terminé."
+
+[job.abort]
+de = "🛑 Abbrechen"
+fr = "🛑 Interrompre"
+
+[job.elapsed]
+de = "⏱️ {elapsed} vergangen, ~{remaining} verbleibend"
+fr = "⏱️ {elapsed} écoulé(s), ~{remaining} restant(s)"
+
+[job.aborting]
+de = "⏳ Breche ab - {step} wird noch fertig verarbeitet …"
+fr = "⏳ Interruption - {step} est encore en cours de traitement …"
+
+# ── Legende der Ad-hoc-Raster ───────────────────────────────────────────────
+
+[overlay.return_period]
+note = 'Mode A legend, e.g. "Fliesstiefe ≥ 0.5 m, Wiederkehrperiode".'
+de = "{variable} ≥ {threshold} {unit}, Wiederkehrperiode"
+fr = "{variable} ≥ {threshold} {unit}, période de retour"
+
+[overlay.intensity]
+note = 'Mode B legend, e.g. "Fliesstiefe bei Wiederkehrperiode 300 Jahre".'
+de = "{variable} bei Wiederkehrperiode {return_period} Jahre"
+fr = "{variable} pour une période de retour de {return_period} ans"
+
+[overlay.hover_too_large]
+de = "Pixelwerte beim Überfahren nur bis {cap} Pixel (dieses Gebiet: {pixels} Pixel)."
+fr = "Valeurs des pixels au survol seulement jusqu’à {cap} pixels (cette zone : {pixels} pixels)."
+
+# ── Raster-Derivate ─────────────────────────────────────────────────────────
+
+[derivate.metric_select]
+de = "Anzeige auf der Karte"
+fr = "Affichage sur la carte"
+
+[derivate.metric_select_help]
+de = "Welche vorberechnete Metrik die Karte zeigt; beim Download unten ist sie vorgewählt. Alle Metriken sind kantonsweit mit den Produktiv-Wahrscheinlichkeiten berechnet; die Erklärung der gewählten Metrik steht unter dem Feld."
+fr = "L’indicateur précalculé affiché par la carte ; il est présélectionné pour le téléchargement ci-dessous. Tous les indicateurs sont calculés pour l’ensemble du canton avec les probabilités de production ; l’explication de l’indicateur choisi figure sous le champ."
+
+[derivate.metric.return_period]
+note = "The metrics of the precomputed rasters, in the picker's order."
+de = "Wiederkehrperiode (bei Schwellenwert)"
+fr = "Période de retour (au seuil)"
+
+[derivate.metric.intensity]
+de = "Intensität (bei Wiederkehrperiode)"
+fr = "Intensité (à la période de retour)"
+
+[derivate.metric.hit_rate]
+de = "Trefferhäufigkeit (bei Schwellenwert)"
+fr = "Fréquence d’atteinte (au seuil)"
+
+[derivate.metric.combined_hit_rate]
+note = "Not in the picker: offered as a Variable of Trefferhäufigkeit; this label names it in lists of datasets."
+de = "Kombinierte Trefferhäufigkeit"
+fr = "Fréquence d’atteinte combinée"
+
+[derivate.metric.start_rate]
+de = "Anrisshäufigkeit"
+fr = "Fréquence de déclenchement"
+
+[derivate.metric.sim_count]
+de = "Anzahl Simulationen"
+fr = "Nombre de simulations"
+
+[derivate.metric.affected_mask]
+de = "Betroffen (mind. eine Simulation)"
+fr = "Touché (au moins une simulation)"
+
+[derivate.metric_short.return_period]
+note = "Shorter labels for the metric select box, which cuts off longer values. The caption below it names the Schwellenwert or Wiederkehrperiode."
+de = "Wiederkehrperiode"
+fr = "Période de retour"
+
+[derivate.metric_short.intensity]
+de = "Intensität"
+fr = "Intensité"
+
+[derivate.metric_short.hit_rate]
+de = "Trefferhäufigkeit"
+fr = "Fréquence d’atteinte"
+
+[derivate.metric_no_data_option]
+note = "A metric in the picker that has no data yet."
+de = "{label} (noch keine Daten)"
+fr = "{label} (pas encore de données)"
+
+[derivate.metric_help.return_period]
+note = "Shown under the metric picker."
+de = "Mittlere Anzahl Jahre, bis der Schwellenwert am Pixel erreicht oder überschritten wird."
+fr = "Nombre moyen d’années avant que le seuil soit atteint ou dépassé au pixel."
+
+[derivate.metric_help.intensity]
+de = "Intensität, die am Pixel im Mittel einmal pro Wiederkehrperiode erreicht oder überschritten wird."
+fr = "Intensité atteinte ou dépassée au pixel, en moyenne, une fois par période de retour."
+
+[derivate.metric_help.hit_rate]
+de = "Erwartete Anzahl Ereignisse pro Jahr, die den Schwellenwert am Pixel erreichen (Kehrwert der Wiederkehrperiode; 0 = nie erreicht)."
+fr = "Nombre d’événements attendus par an qui atteignent le seuil au pixel (inverse de la période de retour ; 0 = jamais atteint)."
+
+[derivate.metric_help.combined_hit_rate]
+note = "Keep the formulas between $ signs exactly as they are."
+de = "**Rate** $\\lambda$: erwartete Anzahl Ereignisse pro Jahr, bei denen alle Bedingungen im selben Ereignis am selben Pixel erfüllt sind: die Summe der Ereignisraten dieser Szenarien.  \n**Wahrscheinlichkeit in 80 Jahren** von mindestens einem solchen Ereignis (Poisson-Prozess): $P = 1 - e^{-80\\,\\lambda}$."
+fr = "**Taux** $\\lambda$ : nombre d’événements attendus par an pour lesquels toutes les conditions sont remplies dans le même événement au même pixel : la somme des taux d’événements de ces scénarios.  \n**Probabilité en 80 ans** d’au moins un tel événement (processus de Poisson) : $P = 1 - e^{-80\\,\\lambda}$."
+
+[derivate.metric_help.start_rate]
+de = "Erwartete Anzahl Anrisse pro Jahr (ab der gewählten Anrissmächtigkeit), deren Anrisskreis den Pixel überdeckt - jeder überdeckte Pixel erhält die volle Rate des Anrisses, Flächensummen zählen Anrisse daher mehrfach."
+fr = "Nombre attendu de déclenchements par an (à partir de l’épaisseur de déclenchement choisie) dont le cercle de déclenchement recouvre le pixel - chaque pixel recouvert reçoit le taux complet du déclenchement, les sommes de surfaces comptent donc plusieurs fois les déclenchements."
+
+[derivate.metric_help.sim_count]
+de = "Anzahl Simulationen, die den Pixel erreichen - ungewichtet, ohne Wahrscheinlichkeiten."
+fr = "Nombre de simulations qui atteignent le pixel - non pondéré, sans probabilités."
+
+[derivate.metric_help.affected_mask]
+de = "Pixel, die von mindestens einer Simulation erreicht werden."
+fr = "Pixels atteints par au moins une simulation."
+
+[derivate.metric_no_data]
+de = "Für «{metric}» liegen noch keine Daten vor. Sobald die Berechnung gelaufen ist, erscheinen hier Karte und Downloads."
+fr = "Il n’y a pas encore de données pour « {metric} ». Dès que le calcul aura été exécuté, la carte et les téléchargements apparaîtront ici."
+
+[derivate.variable_select]
+de = "Variable"
+fr = "Variable"
+
+[derivate.variable_select_help]
+de = "Welche Simulationsgrösse ausgewertet wird: Fliesstiefe [m], Fliessgeschwindigkeit [m/s] oder Druck [kN/m²]. Bei der Trefferhäufigkeit auch «Fliesstiefe und Druck»: beide Schwellenwerte müssen im selben Ereignis am selben Pixel erreicht werden."
+fr = "La grandeur de simulation évaluée : hauteur d’écoulement [m], vitesse d’écoulement [m/s] ou pression [kN/m²]. Pour la fréquence d’atteinte, aussi « Hauteur d’écoulement et pression » : les deux seuils doivent être atteints dans le même événement au même pixel."
+
+[derivate.combo_variable.depth01_pressure3]
+note = "A combination of conditions, as the Variable picker names it."
+de = "Fliesstiefe und Druck"
+fr = "Hauteur d’écoulement et pression"
+
+[derivate.combo_label.depth01_pressure3]
+note = "The full condition of the combination, for the Schwellenwert and the legend."
+de = "Fliesstiefe ≥ 0.1 m und Druck ≥ 3 kN/m²"
+fr = "Hauteur d’écoulement ≥ 0,1 m et pression ≥ 3 kN/m²"
+
+[derivate.threshold]
+de = "Schwellenwert"
+fr = "Seuil"
+
+[derivate.combo_threshold_help]
+de = "Die Schwellenwerte dieser Kombination sind fest vorberechnet: ein Ereignis zählt, wenn es beide im selben Ereignis am selben Pixel erreicht."
+fr = "Les seuils de cette combinaison sont précalculés et fixes : un événement compte s’il atteint les deux dans le même événement au même pixel."
+
+[derivate.band_select]
+de = "Darstellung"
+fr = "Représentation"
+
+[derivate.band_select_min_h]
+de = "Mindest-Anrissmächtigkeit"
+fr = "Épaisseur de déclenchement minimale"
+
+[derivate.band_help.return_period]
+note = "{raster_karten} is the name of the Raster-Karten view (nav.raster_karten)."
+de = "Ab welchem Wert der Variable ein Ereignis am Pixel zählt (≥). Die Karte zeigt, wie viele Jahre es im Mittel dauert, bis dieser Wert erreicht wird. Nur die vorberechneten Werte stehen zur Auswahl; für beliebige Werte {raster_karten} verwenden."
+fr = "À partir de quelle valeur de la variable un événement compte au pixel (≥). La carte montre combien d’années il faut en moyenne pour atteindre cette valeur. Seules les valeurs précalculées sont proposées ; pour des valeurs libres, utiliser {raster_karten}."
+
+[derivate.band_help.hit_rate]
+note = "{raster_karten} is the name of the Raster-Karten view (nav.raster_karten)."
+de = "Ab welchem Wert der Variable ein Ereignis am Pixel zählt (≥). Die Karte zeigt, wie viele solche Ereignisse pro Jahr zu erwarten sind. Nur die vorberechneten Werte stehen zur Auswahl; für beliebige Werte {raster_karten} verwenden."
+fr = "À partir de quelle valeur de la variable un événement compte au pixel (≥). La carte montre combien de tels événements sont attendus par an. Seules les valeurs précalculées sont proposées ; pour des valeurs libres, utiliser {raster_karten}."
+
+[derivate.band_help.intensity]
+note = "{raster_karten} is the name of the Raster-Karten view (nav.raster_karten)."
+de = "Für welche Wiederkehrperiode die Intensität gezeigt wird: der Wert, der am Pixel im Mittel einmal in so vielen Jahren erreicht oder überschritten wird. Nur die vorberechneten Werte stehen zur Auswahl; für beliebige Werte {raster_karten} verwenden."
+fr = "Pour quelle période de retour l’intensité est affichée : la valeur atteinte ou dépassée au pixel, en moyenne, une fois en autant d’années. Seules les valeurs précalculées sont proposées ; pour des valeurs libres, utiliser {raster_karten}."
+
+[derivate.band_help.start_rate]
+de = "Nur Anrisse ab dieser Anrissmächtigkeit zählen zur Anrisshäufigkeit."
+fr = "Seuls les déclenchements à partir de cette épaisseur de déclenchement comptent dans la fréquence de déclenchement."
+
+[derivate.band_help.combined_hit_rate]
+de = "Rate λ (Ereignisse pro Jahr) oder Wahrscheinlichkeit von mindestens einem Ereignis in 80 Jahren (P = 1 − e^(−80·λ))."
+fr = "Taux λ (événements par an) ou probabilité d’au moins un événement en 80 ans (P = 1 − e^(−80·λ))."
+
+[derivate.band_threshold]
+de = "≥ {threshold} {unit}"
+fr = "≥ {threshold} {unit}"
+
+[derivate.band_return_period]
+de = "{return_period} Jahre"
+fr = "{return_period} ans"
+
+[derivate.band_min_h]
+de = "Anrissmächtigkeit ≥ {min_h} m"
+fr = "Épaisseur de déclenchement ≥ {min_h} m"
+
+[derivate.band_rate]
+de = "Ereignisse pro Jahr"
+fr = "Événements par an"
+
+[derivate.band_p80]
+de = "Wahrscheinlichkeit in 80 Jahren"
+fr = "Probabilité en 80 ans"
+
+[derivate.band_empty_option]
+note = "A value in the band picker whose band is empty."
+de = "{label} (keine Werte)"
+fr = "{label} (aucune valeur)"
+
+[derivate.band_empty]
+de = "Dieses Band enthält keine Werte: kein Pixel erreicht die gewählte Bedingung."
+fr = "Cette bande ne contient aucune valeur : aucun pixel ne remplit la condition choisie."
+
+[derivate.intensity_band_empty]
+de = "Für eine Wiederkehrperiode von {return_period} gibt es keine Werte: nirgends im abgedeckten Gebiet treten simulierte Ereignisse so häufig auf (Kanton Bern: kürzeste Wiederkehrperiode rund 12 Jahre)."
+fr = "Il n’y a aucune valeur pour une période de retour de {return_period} : nulle part dans la zone couverte des événements simulés ne sont aussi fréquents (canton de Berne : période de retour la plus courte d’environ 12 ans)."
+
+[derivate.preview_pending_sidebar]
+de = "ℹ️ Karten-Vorschau noch nicht verfügbar (Kanton-Mosaik wird noch gebaut) - der Download der Kacheln funktioniert trotzdem."
+fr = "ℹ️ Aperçu de la carte pas encore disponible (la mosaïque cantonale est en cours de construction) - le téléchargement des tuiles fonctionne quand même."
+
+[derivate.preview_pending]
+de = "Karten-Vorschau für diese Auswahl noch nicht verfügbar - das Kanton-Mosaik wird separat gebaut, sobald alle Kacheln fertig sind. Download der Kacheln ist trotzdem möglich."
+fr = "Aperçu de la carte pas encore disponible pour cette sélection - la mosaïque cantonale est construite séparément dès que toutes les tuiles sont prêtes. Le téléchargement des tuiles reste possible."
+
+[derivate.area_hint]
+de = "📐 Gebiet auf der Karte zeichnen (Rechteck oder Polygon)."
+fr = "📐 Dessiner une zone sur la carte (rectangle ou polygone)."
+
+[derivate.select_area]
+de = "Für einen Ausschnitt oder Kacheln ein Gebiet auf der Karte wählen."
+fr = "Pour un extrait ou des tuiles, choisir une zone sur la carte."
+
+[derivate.too_many_kacheln]
+de = "⚠️ Das Gebiet berührt {n_kacheln} km² Kacheln - mehr als das Maximum von {max_kacheln}. Bitte ein kleineres Gebiet wählen."
+fr = "⚠️ La zone touche {n_kacheln} tuiles de km² - plus que le maximum de {max_kacheln}. Veuillez choisir une zone plus petite."
+
+[derivate.download_heading]
+de = "**Download** - Metriken wählen (jeweils alle Variablen/Kombinationen):"
+fr = "**Téléchargement** - choisir des indicateurs (toutes les variables/combinaisons à chaque fois) :"
+
+[derivate.no_metric]
+de = "Keine Metrik gewählt."
+fr = "Aucun indicateur choisi."
+
+[derivate.no_kacheln]
+de = "Keine vorberechneten Kacheln in diesem Gebiet für die gewählten Metriken."
+fr = "Aucune tuile précalculée dans cette zone pour les indicateurs choisis."
+
+[derivate.missing_mosaic]
+de = "Ohne Kanton-Mosaik (nur als Kacheln): {datasets}"
+fr = "Sans mosaïque cantonale (uniquement en tuiles) : {datasets}"
+
+[derivate.zip_title.crop]
+de = "📐 Ausschnitt (GeoTIFF)"
+fr = "📐 Extrait (GeoTIFF)"
+
+[derivate.zip_help.crop]
+de = "Ein GeoTIFF pro Variable/Kombination mit allen Bändern wie beim Kanton, exakt auf das Gebiet zugeschnitten (Polygon: Pixel ausserhalb = NoData)."
+fr = "Un GeoTIFF par variable/combinaison avec toutes les bandes comme pour le canton, découpé exactement sur la zone (polygone : pixels extérieurs = NoData)."
+
+[derivate.zip_title.kacheln]
+de = "🧩 Kacheln (GeoTIFF)"
+fr = "🧩 Tuiles (GeoTIFF)"
+
+[derivate.zip_help.kacheln]
+de = "Die originalen km² Kacheln, die das Gebiet berühren, unverändert."
+fr = "Les tuiles d’origine de km² qui touchent la zone, inchangées."
+
+[derivate.zip_size_estimate]
+note = "The ZIP of a cut-out: its size is an upper bound."
+de = "Schätzung: höchstens {size}"
+fr = "Estimation : au plus {size}"
+
+[derivate.zip_files]
+note = "{help_text} is derivate.zip_help.crop or derivate.zip_help.kacheln."
+de = "{help_text} {n_files} Datei(en), {size}."
+fr = "{help_text} {n_files} fichier(s), {size}."
+
+[derivate.zip_build]
+de = "ZIP erstellen"
+fr = "Créer le ZIP"
+
+[derivate.zip_download]
+de = "⬇️ ZIP herunterladen ({size})"
+fr = "⬇️ Télécharger le ZIP ({size})"
+
+[derivate.zip_no_mosaic]
+de = "Für die gewählten Metriken ist noch kein Kanton-Mosaik gebaut."
+fr = "Aucune mosaïque cantonale n’est encore construite pour les indicateurs choisis."
+
+[derivate.kanton_title]
+de = "🗺️ Ganzer Kanton (GeoTIFF)"
+fr = "🗺️ Tout le canton (GeoTIFF)"
+
+[derivate.kanton_help]
+de = "- Eine Datei pro Variable/Kombination (5 m-Raster, LV95), unabhängig vom gewählten Gebiet.\n- **Alle Schwellenwerte in einer Datei:** jeder Schwellenwert bzw. jede Wiederkehrperiode ist ein eigenes Band der GeoTIFF. Welches Band was enthält, steht unter jedem Download.\n- Bis rund 9 GB pro Datei; ein abgebrochener Download lässt sich im Browser fortsetzen."
+fr = "- Un fichier par variable/combinaison (raster de 5 m, LV95), indépendamment de la zone choisie.\n- **Tous les seuils dans un fichier :** chaque seuil ou chaque période de retour est une bande distincte du GeoTIFF. Le contenu de chaque bande figure sous chaque téléchargement.\n- Jusqu’à environ 9 GB par fichier ; un téléchargement interrompu peut être repris dans le navigateur."
+
+[derivate.kanton_download]
+de = "⬇️ {dataset} ({size})"
+fr = "⬇️ {dataset} ({size})"
+
+[derivate.kanton_band]
+note = 'One band of a canton file; several are joined with " · ".'
+de = "Band {index}: {label}"
+fr = "Bande {index} : {label}"
+
+# ── Legende der Raster-Derivate ─────────────────────────────────────────────
+
+[legend.title]
+note = 'e.g. "Fliesstiefe ≥ 0.5 m, Wiederkehrperiode".'
+de = "{what}, {measure}"
+fr = "{what}, {measure}"
+
+[legend.intensity]
+de = "{variable} bei Wiederkehrperiode {return_period}"
+fr = "{variable} pour une période de retour de {return_period}"
+
+[legend.return_period]
+de = "Wiederkehrperiode"
+fr = "Période de retour"
+
+[legend.return_period_note]
+de = "feste Skala, über alle Schwellenwerte vergleichbar"
+fr = "échelle fixe, comparable pour tous les seuils"
+
+[legend.hit_rate]
+de = "Trefferhäufigkeit"
+fr = "Fréquence d’atteinte"
+
+[legend.hit_rate_note]
+de = "feste Skala = Kehrwert der Wiederkehrperiode-Skala · 0 = transparent"
+fr = "échelle fixe = inverse de l’échelle de période de retour · 0 = transparent"
+
+[legend.p80]
+de = "P(≥ 1 Ereignis in 80 Jahren)"
+fr = "P(≥ 1 événement en 80 ans)"
+
+[legend.p80_note]
+de = "P = 1 − e^(−80·λ), λ = Ereignisse pro Jahr (Poisson)"
+fr = "P = 1 − e^(−80·λ), λ = événements par an (Poisson)"
+
+[legend.start_rate]
+de = "Anrisshäufigkeit"
+fr = "Fréquence de déclenchement"
+
+[legend.start_rate_note]
+de = "volle Rate pro überdecktem Pixel · 0 = transparent"
+fr = "taux complet par pixel recouvert · 0 = transparent"
+
+[legend.sim_count_note]
+de = "ungewichtet · 0 = transparent"
+fr = "non pondéré · 0 = transparent"
+
+# ── Raster-Server ───────────────────────────────────────────────────────────
+
+[server.canton_busy]
+de = "Der Server liefert gerade mehrere Kanton-Dateien aus. Bitte in einer Minute nochmals auf den Download klicken."
+fr = "Le serveur livre actuellement plusieurs fichiers cantonaux. Veuillez cliquer à nouveau sur le téléchargement dans une minute."
+
+[server.zip_busy]
+de = "Der Server erstellt gerade andere ZIPs. Bitte in einer Minute nochmals auf «ZIP herunterladen» klicken."
+fr = "Le serveur crée actuellement d’autres ZIP. Veuillez cliquer à nouveau sur « Télécharger le ZIP » dans une minute."
+
+# ── Anriss ──────────────────────────────────────────────────────────────────
+
+[anriss.parameters]
+de = "Parameterauswahl"
+fr = "Choix des paramètres"
+
+[anriss.loading]
+de = "Anriss wird geladen…"
+fr = "Chargement de la zone de déclenchement…"
+
+[anriss.not_loaded]
+de = "Anriss nicht geladen"
+fr = "Zone de déclenchement non chargée"
+
+[anriss.step_sim]
+de = "Simulationsdaten"
+fr = "Données de simulation"
+
+[anriss.step_sim_prefetched]
+de = "Simulationsdaten (schon beim Öffnen des Karten-Popups angefordert)"
+fr = "Données de simulation (déjà demandées à l’ouverture de la fenêtre de la carte)"
+
+[anriss.step_fallback]
+de = "Dort noch nicht vorhanden: Suche in den berechneten Kacheln (dauert länger)"
+fr = "Pas encore disponibles là : recherche dans les tuiles calculées (plus long)"
+
+[anriss.step_map_layers]
+de = "Kartenebenen vorbereiten"
+fr = "Préparation des couches de la carte"
+
+[anriss.load_error]
+de = "Fehler beim Laden der Daten für Anriss {id}. Bitte später erneut versuchen; bleibt der Fehler, bitte melden."
+fr = "Erreur lors du chargement des données de la zone de déclenchement {id}. Veuillez réessayer plus tard ; si l’erreur persiste, veuillez la signaler."
+
+[anriss.gold_not_ready]
+de = "Diese Simulation reicht in {n} noch nicht berechnete Kachel(n): {kacheln}. Bitte später erneut versuchen."
+fr = "Cette simulation s’étend sur {n} tuile(s) pas encore calculée(s) : {kacheln}. Veuillez réessayer plus tard."
+
+[anriss.deselect]
+de = "← Anriss abwählen"
+fr = "← Désélectionner la zone"
+
+[anriss.no_data]
+de = "Keine Daten vorhanden"
+fr = "Aucune donnée disponible"
+
+[anriss.spinner_map_layers]
+de = "Bereite Kartenebenen vor…"
+fr = "Préparation des couches de la carte…"
+
+[anriss.layer_hull]
+de = "Umhüllende"
+fr = "Enveloppe"
+
+[anriss.layer_hull_adhoc]
+de = "Umhüllende (Ad-hoc)"
+fr = "Enveloppe (ad hoc)"
+
+[anriss.layer_release]
+de = "Anriss (Kreis)"
+fr = "Déclenchement (cercle)"
+
+[anriss.layer_reach]
+de = "{reach_m}m-Grenze (max. Distanz)"
+fr = "Limite de {reach_m} m (distance max.)"
+
+[anriss.hull_loading]
+de = "⏳ Umhüllende wird geladen…"
+fr = "⏳ Chargement de l’enveloppe…"
+
+[anriss.hull_error]
+de = "⚠️ Vorberechnete Umhüllende konnte nicht geladen werden. Bitte später erneut versuchen; bleibt der Fehler, bitte melden."
+fr = "⚠️ L’enveloppe précalculée n’a pas pu être chargée. Veuillez réessayer plus tard ; si l’erreur persiste, veuillez la signaler."
+
+[anriss.hull_not_indexed]
+de = "Anriss {id}: Die Umhüllende ist noch nicht berechnet. Bitte später erneut versuchen."
+fr = "Zone de déclenchement {id} : l’enveloppe n’est pas encore calculée. Veuillez réessayer plus tard."
+
+[anriss.adhoc_hull_button]
+de = "🛡️ Ad-hoc Umhüllende berechnen"
+fr = "🛡️ Calculer l’enveloppe ad hoc"
+
+[anriss.spinner_adhoc_hull]
+de = "Berechne Umhüllende…"
+fr = "Calcul de l’enveloppe…"
+
+[anriss.adhoc_hull_not_ready]
+de = "Noch nicht alle benötigten Kacheln fertig: {kacheln}"
+fr = "Toutes les tuiles nécessaires ne sont pas encore prêtes : {kacheln}"
+
+[anriss.adhoc_hull_not_indexed]
+de = "Anriss {id}: Die Umhüllende ist noch nicht berechnet."
+fr = "Zone de déclenchement {id} : l’enveloppe n’est pas encore calculée."
+
+[anriss.stats_heading]
+de = "Statistik"
+fr = "Statistiques"
+
+[anriss.metric_rate]
+de = "Ereignisrate λ [1/Jahr]"
+fr = "Taux d’événements λ [1/an]"
+
+[anriss.metric_points]
+de = "Datenpunkte"
+fr = "Points de données"
+
+[anriss.metric_max]
+de = "Max {label}"
+fr = "Max {label}"
+
+[anriss.metric_mean]
+de = "Durchschnitt {label}"
+fr = "Moyenne {label}"
+
+[anriss.lambda_error]
+de = "⚠️ Die Ereignisrate λ konnte nicht berechnet werden."
+fr = "⚠️ Le taux d’événements λ n’a pas pu être calculé."
+
+[anriss.export_heading]
+de = "Derivate & Export"
+fr = "Dérivés & export"
+
+[anriss.export_caption]
+de = "GeoTIFF: die gewählte Simulation. Rohdaten: alle Simulationen dieses Anrisses, eine Zeile pro Pixel und Szenario, inkl. Wahrscheinlichkeiten/Raten. Umhüllende: die Fläche aller Simulationen zusammen."
+fr = "GeoTIFF : la simulation choisie. Données brutes : toutes les simulations de cette zone de déclenchement, une ligne par pixel et scénario, probabilités/taux inclus. Enveloppe : la surface de toutes les simulations ensemble."
+
+[anriss.spinner_rohdaten]
+de = "Berechne die Ereignisrate λ für alle Szenarien dieses Anrisses…"
+fr = "Calcul du taux d’événements λ pour tous les scénarios de cette zone de déclenchement…"
+
+[anriss.rohdaten_download]
+de = "Rohdaten"
+fr = "Données brutes"
+
+[anriss.rohdaten_error]
+de = "⚠️ Rohdaten-Berechnung fehlgeschlagen. Bitte später erneut versuchen; bleibt der Fehler, bitte melden."
+fr = "⚠️ Le calcul des données brutes a échoué. Veuillez réessayer plus tard ; si l’erreur persiste, veuillez la signaler."
+
+[anriss.rohdaten_model]
+de = "Datenmodell der Rohdaten"
+fr = "Modèle de données des données brutes"
+
+[anriss.rohdaten_units]
+note = "Ends with an empty line: the text that follows starts a new paragraph."
+de = "Einheiten im CSV wie auf der Karte und im GeoTIFF: **Fliesstiefe, d und h in m**, **Fliessgeschwindigkeit in m/s**, **Druck in kN/m²**.\n\n"
+fr = "Unités dans le CSV comme sur la carte et dans le GeoTIFF : **hauteur d’écoulement, d et h en m**, **vitesse d’écoulement en m/s**, **pression en kN/m²**.\n\n"
+
+[anriss.rohdaten_header_column]
+note = "Header of the Rohdaten data-model table: the CSV's column names, which stay as they are."
+de = "Spalte"
+fr = "Colonne"
+
+[anriss.rohdaten_header_meaning]
+note = "Header of the Rohdaten data-model table: what each CSV column holds."
+de = "Bedeutung"
+fr = "Signification"
+
+[anriss.rohdaten_meaning.id_prozessquelle]
+de = "Prozessquelle, innerhalb welcher der Anriss liegt"
+fr = "Source de processus dans laquelle se trouve la zone de déclenchement"
+
+[anriss.rohdaten_meaning.id_anriss]
+de = "Anriss ID (eindeutig)"
+fr = "ID de la zone de déclenchement (unique)"
+
+[anriss.rohdaten_meaning.anriss_xy]
+de = "Mittelpunkt des Anrisses (LV95)"
+fr = "Centre de la zone de déclenchement (LV95)"
+
+[anriss.rohdaten_meaning.a]
+de = "Anrissfläche in m²"
+fr = "Surface de déclenchement en m²"
+
+[anriss.rohdaten_meaning.d]
+de = "Bodengründigkeit in m"
+fr = "Profondeur du sol en m"
+
+[anriss.rohdaten_meaning.h]
+de = "Anrissmächtigkeit in m"
+fr = "Épaisseur de déclenchement en m"
+
+[anriss.rohdaten_meaning.friction]
+de = "Reibungsparameter der Simulation"
+fr = "Paramètre de frottement de la simulation"
+
+[anriss.rohdaten_meaning.pixel_xy]
+de = "Pixelmittelpunkt (LV95, 5 m-Raster)"
+fr = "Centre du pixel (LV95, raster de 5 m)"
+
+[anriss.rohdaten_meaning.depth]
+de = "maximale Fliesstiefe am Pixel"
+fr = "hauteur d’écoulement maximale au pixel"
+
+[anriss.rohdaten_meaning.velocity]
+de = "maximale Fliessgeschwindigkeit am Pixel"
+fr = "vitesse d’écoulement maximale au pixel"
+
+[anriss.rohdaten_meaning.pressure]
+de = "maximaler Druck am Pixel"
+fr = "pression maximale au pixel"
+
+[anriss.rohdaten_meaning.lambda_hangmuren]
+de = "Hangmuren-Rate der Prozessquelle"
+fr = "Taux de coulées de boue de versant de la source de processus"
+
+[anriss.rohdaten_meaning.p_raeumlich]
+de = "räumliche Wahrscheinlichkeit des Anrisses"
+fr = "probabilité spatiale de la zone de déclenchement"
+
+[anriss.rohdaten_meaning.p_a]
+de = "Wahrscheinlichkeit der Anrissfläche A"
+fr = "Probabilité de la surface de déclenchement A"
+
+[anriss.rohdaten_meaning.p_h]
+de = "Wahrscheinlichkeit der Anrissmächtigkeit h"
+fr = "Probabilité de l’épaisseur de déclenchement h"
+
+[anriss.rohdaten_meaning.p_ablauf]
+note = "mu, xsi, tau0 are the CSV's column names and stay as they are."
+de = "Wahrscheinlichkeit der Ablaufparameterkombination mu/xsi/tau0"
+fr = "Probabilité de la combinaison de paramètres de propagation mu/xsi/tau0"
+
+[anriss.rohdaten_meaning.lambda_ereignis]
+note = "The names in the formula are the CSV's column names and stay as they are."
+de = "Rate des Szenarios = lambda_Hangmuren · p_raeumlich · p_A · p_h · p_Ablauf"
+fr = "Taux du scénario = lambda_Hangmuren · p_raeumlich · p_A · p_h · p_Ablauf"
+
+[anriss.hull_download_geopackage]
+de = "Umhüllende, LV95"
+fr = "Enveloppe, LV95"
+
+[anriss.hull_download_geojson]
+de = "Umhüllende, WGS84"
+fr = "Enveloppe, WGS84"
+
+[anriss.adhoc_hull_download]
+de = "Umhüllende (Ad-hoc)"
+fr = "Enveloppe (ad hoc)"
+
+[anriss.bad_link]
+de = "Der Link enthält keine gültige Anriss-ID (id = ganze Zahl ab 1)."
+fr = "Le lien ne contient pas d’ID de zone de déclenchement valide (id = entier à partir de 1)."
+
+# ── Gebäudeschatten ─────────────────────────────────────────────────────────
+
+[gs.building_input]
+de = "Gebäude-ID (id_start)"
+fr = "ID du bâtiment (id_start)"
+
+[gs.building_placeholder]
+de = "Gebäude-ID eingeben…"
+fr = "Saisir l’ID du bâtiment…"
+
+[gs.building_submit]
+de = "Gebäude anzeigen"
+fr = "Afficher le bâtiment"
+
+[gs.reach_select]
+de = "Reichweite"
+fr = "Portée"
+
+[gs.reach_select_help]
+de = "Für jede Reichweite gibt es eine eigene Maske: die ganze Simulation, oder auf 100, 50 bzw. 25 m ab dem Rand der Freisetzungsfläche beschnitten."
+fr = "Chaque portée a son propre masque : la simulation entière, ou tronquée à 100, 50 ou 25 m du bord de la surface de libération."
+
+[gs.reach.800]
+de = "800 m (ganze Simulation)"
+fr = "800 m (simulation entière)"
+
+[gs.reach.100]
+de = "100 m"
+fr = "100 m"
+
+[gs.reach.50]
+de = "50 m"
+fr = "50 m"
+
+[gs.reach.25]
+de = "25 m"
+fr = "25 m"
+
+[gs.variant_select]
+de = "Variante der Abschattung"
+fr = "Variante d’ombrage"
+
+[gs.variant_select_help]
+de = "Welche Simulationspixel als «abgeschattet» zählen. Die Karte zeigt die Maske dieser Variante; ausgeschlossene Pixel eines gewählten Gebäudes sind grau."
+fr = "Les pixels de simulation qui comptent comme « ombragés ». La carte montre le masque de cette variante ; les pixels exclus d’un bâtiment choisi sont en gris."
+
+[gs.variant.raw]
+de = "Roh: jede Simulation"
+fr = "Brut : chaque simulation"
+
+[gs.variant.shadowing_building]
+de = "Ohne eigenes Gebäude"
+fr = "Sans le bâtiment lui-même"
+
+[gs.variant.shadowing_building_surrounding]
+de = "Ohne eigenes Gebäude und Umgebung"
+fr = "Sans le bâtiment et ses abords"
+
+[gs.variant_help.raw]
+note = 'Explains the selected variant; {min_depth} is the Mindest-Fliesstiefe, e.g. "0.10 m".'
+de = "Ein Pixel ist abgeschattet, sobald eine Simulation dort mindestens {min_depth} Fliesstiefe erreicht."
+fr = "Un pixel est ombragé dès qu’une simulation y atteint au moins {min_depth} de hauteur d’écoulement."
+
+[gs.variant_help.shadowing_building]
+de = "Wie Roh (ab {min_depth}), aber die Pixel im eigenen Gebäude (Maske 1) zählen für dieses Gebäude nicht. Die Nachbarpixel (Maske 2) zählen, weil der Fluss dort das Gebäude verlässt."
+fr = "Comme Brut (à partir de {min_depth}), mais les pixels du bâtiment lui-même (masque 1) ne comptent pas pour ce bâtiment. Les pixels voisins (masque 2) comptent, car l’écoulement y quitte le bâtiment."
+
+[gs.variant_help.shadowing_building_surrounding]
+de = "Zählt nur Pixel ausserhalb des eigenen Gebäudes und seines Nachbarrings, ab {min_depth}. Bei Gebäuden ohne eigenen Rasterpunkt (zu klein) zählt auch der Ring um ihr Ersatzpixel nicht."
+fr = "Ne compte que les pixels en dehors du bâtiment lui-même et de son anneau voisin, à partir de {min_depth}. Pour les bâtiments sans point de raster propre (trop petits), l’anneau autour de leur pixel de remplacement ne compte pas non plus."
+
+[gs.min_depth_select]
+de = "Mindest-Fliesstiefe"
+fr = "Hauteur d’écoulement minimale"
+
+[gs.min_depth_select_help]
+de = "Ab welcher Fliesstiefe eine Simulation einen Pixel abschattet. Für jede Mindesttiefe gibt es eine eigene Maske."
+fr = "À partir de quelle hauteur d’écoulement une simulation ombrage un pixel. Chaque hauteur minimale a son propre masque."
+
+[gs.simulation]
+de = "Simulation des Gebäudes"
+fr = "Simulation du bâtiment"
+
+[gs.simulation_help]
+de = "Nur für das gewählte Gebäude: seine Pixel für einen Parametersatz statt des Maximums über alle. Die Maske «Im Schatten (Kanton)» und ihr Download umfassen immer alle Simulationen."
+fr = "Uniquement pour le bâtiment choisi : ses pixels pour un jeu de paramètres au lieu du maximum sur tous. Le masque « À l’ombre (canton) » et son téléchargement incluent toujours toutes les simulations."
+
+[gs.variants_expander]
+de = "Wie die Varianten entstehen"
+fr = "Comment naissent les variantes"
+
+[gs.variants_rules]
+de = "Jeder Datensatz ist eine Simulation eines Gebäudes (Anrissmächtigkeit = 0.5 m, μ = 0.025 oder 0.05, ξ = 100, τ₀ = 0) an einem Pixel. Die Regeln werden pro Gebäude angewendet: ein Pixel, der für sein eigenes Gebäude nicht zählt, kann trotzdem abgeschattet sein, weil ein anderes Gebäude ihn erreicht. Die Karte zeigt die Maske, die aus genau diesen Regeln gebaut ist."
+fr = "Chaque enregistrement est une simulation d’un bâtiment (épaisseur de déclenchement = 0,5 m, μ = 0,025 ou 0,05, ξ = 100, τ₀ = 0) en un pixel. Les règles s’appliquent par bâtiment : un pixel qui ne compte pas pour son propre bâtiment peut quand même être ombragé, parce qu’un autre bâtiment l’atteint. La carte montre le masque construit exactement à partir de ces règles."
+
+[gs.layer_building]
+de = "Gewähltes Gebäude (Simulationsstart)"
+fr = "Bâtiment choisi (départ de la simulation)"
+
+[gs.layer_shadowing]
+de = "Beschattende Gebäude, zählen hier (Grundriss)"
+fr = "Bâtiments ombrageants, comptent ici (emprise)"
+
+[gs.layer_reaching]
+de = "Erreichende Gebäude, zählen hier nicht (Grundriss)"
+fr = "Bâtiments atteignants, ne comptent pas ici (emprise)"
+
+[gs.layer_pixel]
+de = "Gewählter Pixel"
+fr = "Pixel choisi"
+
+[gs.layer_cells]
+de = "Pixel der gewählten Gebäude"
+fr = "Pixels des bâtiments choisis"
+
+[gs.own_pixel]
+note = "Also used in the CSV download, which stays German."
+de = "Gebäudepixel (Maske 1)"
+fr = "Pixel de bâtiment (masque 1)"
+
+[gs.ring_pixel]
+note = "Also used in the CSV download, which stays German."
+de = "Nachbarpixel (Maske 2)"
+fr = "Pixel voisin (masque 2)"
+
+[gs.legend_shadow]
+de = "im Schatten (zählt als abgeschattet)"
+fr = "à l’ombre (compte comme ombragé)"
+
+[gs.legend_excluded]
+de = "erreicht, aber von der Variante ausgeschlossen"
+fr = "atteint, mais exclu par la variante"
+
+[gs.all_sims]
+de = "alle (Maximum)"
+fr = "toutes (maximum)"
+
+[gs.counts]
+de = "zählt als abgeschattet"
+fr = "compte comme ombragé"
+
+[gs.building_heading]
+de = "Gebäude {id_start}"
+fr = "Bâtiment {id_start}"
+
+[gs.building_no_pixels]
+de = "Gebäude {id_start} hat keine Simulationspixel bei dieser Reichweite."
+fr = "Le bâtiment {id_start} n’a aucun pixel de simulation pour cette portée."
+
+[gs.building_no_reach]
+de = "Gebäude {id_start} erreicht bei {reach_label} keine Pixel."
+fr = "Le bâtiment {id_start} n’atteint aucun pixel à {reach_label}."
+
+[gs.pixel_heading]
+de = "Pixel {e} / {n}"
+fr = "Pixel {e} / {n}"
+
+[gs.pixel_no_sim]
+de = "Keine Simulation erreicht diesen Pixel."
+fr = "Aucune simulation n’atteint ce pixel."
+
+[gs.pixel_summary]
+de = "{n_counting} von {n_reaching} erreichenden Gebäuden zählen hier ({variant_label}, ab {min_depth}). Zeile anklicken, um das Gebäude zu wählen."
+fr = "{n_counting} des {n_reaching} bâtiments atteignants comptent ici ({variant_label}, à partir de {min_depth}). Cliquer sur une ligne pour choisir le bâtiment."
+
+[gs.metric_sims]
+de = "Simulationen"
+fr = "Simulations"
+
+[gs.metric_own]
+de = "Gebäudepixel"
+fr = "Pixel de bâtiment"
+
+[gs.metric_ring]
+de = "Nachbarpixel"
+fr = "Pixels voisins"
+
+[gs.col_variant]
+de = "Variante"
+fr = "Variante"
+
+[gs.col_shadowed]
+de = "abgeschattete Pixel"
+fr = "pixels ombragés"
+
+[gs.col_excluded]
+de = "ausgeschlossen"
+fr = "exclus"
+
+[gs.col_building]
+de = "Gebäude"
+fr = "Bâtiment"
+
+[gs.col_depth]
+de = "Fliesstiefe max [m]"
+fr = "Hauteur d’écoulement max [m]"
+
+[gs.col_sims]
+de = "Simulationen"
+fr = "Simulations"
+
+[gs.col_counts]
+note = "Also a column of the CSV download, which stays German."
+de = "zählt"
+fr = "compte"
+
+[gs.col_reason]
+note = "Also a column of the CSV download, which stays German."
+de = "Grund"
+fr = "Motif"
+
+[gs.yes]
+note = "Also used in the CSV download, which stays German."
+de = "ja"
+fr = "oui"
+
+[gs.no]
+note = "Also used in the CSV download, which stays German."
+de = "nein"
+fr = "non"
+
+[gs.reason.own_building]
+note = "Why a pixel is excluded. Also used in the CSV download, which stays German."
+de = "eigenes Gebäude (Maske 1)"
+fr = "bâtiment lui-même (masque 1)"
+
+[gs.reason.own_neighbor]
+de = "Nachbarpixel des eigenen Gebäudes (Maske 2)"
+fr = "pixel voisin du bâtiment lui-même (masque 2)"
+
+[gs.reason.below_min_depth]
+note = '{min_depth} is the Mindest-Fliesstiefe, e.g. "0.10 m".'
+de = "Fliesstiefe unter {min_depth}"
+fr = "hauteur d’écoulement inférieure à {min_depth}"
+
+[gs.reason.fallback_neighbor]
+de = "neben dem Ersatzpixel eines zu kleinen Gebäudes"
+fr = "à côté du pixel de remplacement d’un bâtiment trop petit"
+
+[gs.excluded]
+de = "ausgeschlossen: {reason}"
+fr = "exclu : {reason}"
+
+[gs.excluded_summary]
+note = '{reasons} is a list of gs.excluded_summary_item, joined with " · ".'
+de = "Ausgeschlossene Pixel (aktuelle Variante): {reasons}"
+fr = "Pixels exclus (variante actuelle) : {reasons}"
+
+[gs.excluded_summary_item]
+de = "{reason}: {count}"
+fr = "{reason} : {count}"
+
+[gs.cell_tooltip]
+note = "The map tooltip of a pixel; Sim. is short for Simulationen."
+de = "Fliesstiefe max {depth} ({n_sims} Sim.)\n{status}"
+fr = "Hauteur d’écoulement max {depth} ({n_sims} sim.)\n{status}"
+
+[gs.shadowing_tooltip_counts]
+de = "Gebäude {id_start}: {kind}\nzählt am gewählten Pixel"
+fr = "Bâtiment {id_start} : {kind}\ncompte au pixel choisi"
+
+[gs.shadowing_tooltip_not_counts]
+de = "Gebäude {id_start}: {kind}\nzählt nicht am gewählten Pixel"
+fr = "Bâtiment {id_start} : {kind}\nne compte pas au pixel choisi"
+
+[gs.mask_label]
+de = "Im Schatten (Kanton, alle Simulationen): {variant_label}, {reach_label}, ab {min_depth}"
+fr = "À l’ombre (canton, toutes les simulations) : {variant_label}, {reach_label}, à partir de {min_depth}"
+
+[gs.building_csv]
+de = "📥 Rohdaten des Gebäudes herunterladen (CSV)"
+fr = "📥 Télécharger les données brutes du bâtiment (CSV)"
+
+[gs.building_csv_help]
+de = "Eine Zeile pro Simulation und Pixel, mit Fliesstiefe [m], Fliessgeschwindigkeit [m/s], Druck [kN/m²] und Maske (1 = Gebäudepixel, 2 = Nachbarpixel, 0 = übrige); «zählt» und «Grund» gelten für die gewählte Variante und Mindest-Fliesstiefe."
+fr = "Une ligne par simulation et pixel, avec hauteur d’écoulement [m], vitesse d’écoulement [m/s], pression [kN/m²] et masque (1 = pixel de bâtiment, 2 = pixel voisin, 0 = autres) ; « compte » et « Motif » valent pour la variante et la hauteur d’écoulement minimale choisies."
+
+[gs.pixel_csv]
+de = "📥 Tabelle herunterladen (CSV)"
+fr = "📥 Télécharger le tableau (CSV)"
+
+[gs.building_tif]
+de = "📥 Pixel des Gebäudes herunterladen (GeoTIFF)"
+fr = "📥 Télécharger les pixels du bâtiment (GeoTIFF)"
+
+[gs.building_tif_help]
+de = "Was die Karte zeigt, als Raster (LV95, 5 m) mit vier Bändern: Maske (1 = Gebäudepixel, 2 = Nachbarpixel, 0 = übrige), abgeschattet (1 = zählt, 0 = ausgeschlossen, für die gewählte Variante und Mindest-Fliesstiefe), Fliesstiefe max [m] und Anzahl Simulationen. Pixel, die keine Simulation erreicht, sind NoData."
+fr = "Ce que montre la carte, sous forme de raster (LV95, 5 m) à quatre bandes : masque (1 = pixel de bâtiment, 2 = pixel voisin, 0 = autres), ombragé (1 = compte, 0 = exclu, pour la variante et la hauteur d’écoulement minimale choisies), hauteur d’écoulement max [m] et nombre de simulations. Les pixels qu’aucune simulation n’atteint sont NoData."
+
+[gs.mask_download]
+de = "📥 Maske (Kanton) herunterladen (GeoTIFF)"
+fr = "📥 Télécharger le masque (canton) (GeoTIFF)"
+
+[gs.mask_download_help]
+de = "Die Maske «Im Schatten (Kanton)» mit der gewählten Reichweite, Variante und Mindest-Fliesstiefe, für den ganzen Kanton (5 m-Raster, LV95, wenige MB). Ein Pixel ist im Schatten, sobald mindestens eine Simulation ihn abschattet: über alle Parametersätze (z. B. beide μ-Werte) hinweg, unabhängig von der «Simulation des Gebäudes»."
+fr = "Le masque « À l’ombre (canton) » avec la portée, la variante et la hauteur d’écoulement minimale choisies, pour tout le canton (raster de 5 m, LV95, quelques MB). Un pixel est à l’ombre dès qu’au moins une simulation l’ombrage : sur tous les jeux de paramètres (p. ex. les deux valeurs de μ), indépendamment de la « Simulation du bâtiment »."
+
+# ── Gebiet (Raster-Karten und Raster-Derivate) ──────────────────────────────
+
+[area.heading]
+de = "Gebiet"
+fr = "Zone"
+
+[area.hint]
+de = "📐 Gebiet auf der Karte zeichnen (Rechteck oder Polygon) oder von einer Datei hochladen."
+fr = "📐 Dessiner une zone sur la carte (rectangle ou polygone) ou la téléverser depuis un fichier."
+
+[area.shape_rectangle]
+de = "Rechteck"
+fr = "Rectangle"
+
+[area.shape_polygon_vertices]
+de = "Polygon ({n_vertices} Eckpunkte)"
+fr = "Polygone ({n_vertices} sommets)"
+
+[area.selection_size]
+note = "The sidebar caption of a drawn or uploaded area."
+de = "{shape}: {size} in {n_kacheln} km² Kacheln"
+fr = "{shape} : {size} dans {n_kacheln} tuiles de km²"
+
+[area.threshold_label]
+de = "Schwellenwert [{unit}]"
+fr = "Seuil [{unit}]"
+
+[area.return_period_label]
+de = "Wiederkehrperiode [Jahre]"
+fr = "Période de retour [ans]"
+
+[area.reset]
+de = "↺ Zurücksetzen"
+fr = "↺ Réinitialiser"
+
+# ── Gebiet hochladen ────────────────────────────────────────────────────────
+
+[upload.expander]
+de = "📂 Gebiet hochladen"
+fr = "📂 Téléverser une zone"
+
+[upload.label]
+de = "GeoJSON, KML, GeoParquet oder Shapefile (.zip, oder .shp zusammen mit .shx/.dbf/... auswählen)"
+fr = "GeoJSON, KML, GeoParquet ou Shapefile (.zip, ou sélectionner .shp avec .shx/.dbf/...)"
+
+[upload.done]
+de = "✅ Erfolgreich hochgeladen."
+fr = "✅ Téléversement réussi."
+
+[upload.crs_missing]
+de = "Datei enthält kein Koordinatensystem - bitte auswählen:"
+fr = "Le fichier ne contient pas de système de coordonnées - veuillez en choisir un :"
+
+[upload.crs_select]
+de = "Koordinatensystem der Datei"
+fr = "Système de coordonnées du fichier"
+
+[upload.crs_apply]
+de = "Übernehmen"
+fr = "Appliquer"
+
+[upload.crs_outside]
+de = "Datei deklariert {crs}, aber die reprojizierten Koordinaten liegen weit ausserhalb der Schweiz - falsches Koordinatensystem?"
+fr = "Le fichier déclare {crs}, mais les coordonnées reprojetées se trouvent bien en dehors de la Suisse - mauvais système de coordonnées ?"
+
+[upload.crs_still_outside]
+de = "Auch mit diesem Koordinatensystem liegen die Koordinaten weit ausserhalb der Schweiz - bitte ein anderes wählen oder die Datei prüfen."
+fr = "Avec ce système de coordonnées aussi, les coordonnées se trouvent bien en dehors de la Suisse - veuillez en choisir un autre ou vérifier le fichier."
+
+[upload.too_big]
+de = "Datei ist zu gross, zu komplex oder beschädigt - erwartet wird eine kleine Datei mit genau einem Polygon."
+fr = "Le fichier est trop grand, trop complexe ou endommagé - un petit fichier contenant exactement un polygone est attendu."
+
+[upload.unreadable]
+de = "Datei konnte nicht gelesen werden. Unterstützt: GeoJSON, KML, GeoParquet, Shapefile (als .zip oder als lose .shp/.shx/.dbf/... Dateien)."
+fr = "Le fichier n’a pas pu être lu. Formats pris en charge : GeoJSON, KML, GeoParquet, Shapefile (en .zip ou en fichiers .shp/.shx/.dbf/... séparés)."
+
+[upload.unsupported_type]
+de = "Dateityp von «{name}» wird nicht unterstützt. Unterstützt: GeoJSON, KML, GeoParquet, Shapefile (als .zip oder als lose .shp/.shx/.dbf/... Dateien)."
+fr = "Le type de fichier de « {name} » n’est pas pris en charge. Formats pris en charge : GeoJSON, KML, GeoParquet, Shapefile (en .zip ou en fichiers .shp/.shx/.dbf/... séparés)."
+
+[upload.not_geojson]
+de = "Datei ist kein GeoJSON."
+fr = "Le fichier n’est pas un GeoJSON."
+
+[upload.not_kml]
+de = "Datei ist kein KML."
+fr = "Le fichier n’est pas un KML."
+
+[upload.not_shapefile]
+de = "Datei ist kein Shapefile."
+fr = "Le fichier n’est pas un Shapefile."
+
+[upload.wrong_format]
+de = "Datei ist beschädigt oder hat nicht das Format ihrer Endung."
+fr = "Le fichier est endommagé ou n’a pas le format de son extension."
+
+[upload.parquet_brotli]
+de = "GeoParquet-Dateien mit Brotli-Kompression werden wegen einer Sicherheitslücke in Brotli (CVE-2026-111497) vorübergehend abgelehnt ([Meldung des BACS](https://security-hub.ncsc.admin.ch/#/posts/13105)). Bitte die Datei mit ZSTD- oder Snappy-Kompression speichern oder als GeoJSON hochladen."
+fr = "Les fichiers GeoParquet compressés avec Brotli sont temporairement refusés en raison d’une faille de sécurité dans Brotli (CVE-2026-111497) ([avis de l’OFCS](https://security-hub.ncsc.admin.ch/#/posts/13105)). Veuillez enregistrer le fichier avec la compression ZSTD ou Snappy, ou le téléverser au format GeoJSON."
+
+[upload.bad_zip]
+de = "ZIP-Datei ist beschädigt oder kein gültiges ZIP-Archiv."
+fr = "Le fichier ZIP est endommagé ou n’est pas une archive ZIP valide."
+
+[upload.zip_no_shp]
+de = "Im ZIP wurde keine .shp-Datei gefunden (Shapefile erwartet)."
+fr = "Aucun fichier .shp trouvé dans le ZIP (Shapefile attendu)."
+
+[upload.zip_too_many_entries]
+de = "ZIP-Archiv enthält {n_entries} Einträge - maximal {max_entries} erlaubt."
+fr = "L’archive ZIP contient {n_entries} entrées - {max_entries} au maximum autorisées."
+
+[upload.zip_too_large]
+de = "ZIP-Archiv ergibt entpackt {size_mb} MB - maximal {max_mb} MB erlaubt."
+fr = "L’archive ZIP fait {size_mb} MB une fois décompressée - {max_mb} MB au maximum autorisés."
+
+[upload.zip_ratio]
+de = "Eintrag «{name}» hat ein Kompressionsverhältnis von {ratio}:1 - maximal {max_ratio}:1 erlaubt."
+fr = "L’entrée « {name} » a un taux de compression de {ratio}:1 - {max_ratio}:1 au maximum autorisé."
+
+[upload.files_no_shp]
+de = "Mehrere Dateien hochgeladen, aber keine .shp darunter - bei mehreren Dateien wird ein Shapefile-Bündel (.shp zusammen mit .shx/.dbf/...) erwartet."
+fr = "Plusieurs fichiers téléversés, mais aucun .shp parmi eux - pour plusieurs fichiers, un ensemble Shapefile (.shp avec .shx/.dbf/...) est attendu."
+
+[upload.shp_part_alone]
+de = "Datei kann nicht allein gelesen werden - ein Shapefile braucht die .shp zusammen mit .shx/.dbf/..., sonst GeoJSON, KML oder GeoParquet hochladen."
+fr = "Le fichier ne peut pas être lu seul - un Shapefile nécessite le .shp avec .shx/.dbf/..., sinon téléverser un GeoJSON, KML ou GeoParquet."
+
+[upload.too_many_files]
+de = "Zu viele Dateien ({n_files}) - maximal {max_files} erlaubt."
+fr = "Trop de fichiers ({n_files}) - {max_files} au maximum autorisés."
+
+[upload.bad_name]
+de = "Ungültiger Dateiname «{name}» - bitte eine Datei ohne Verzeichnisangabe hochladen."
+fr = "Nom de fichier « {name} » non valide - veuillez téléverser un fichier sans indication de répertoire."
+
+[upload.no_geometry]
+de = "Datei enthält keine Geometrie."
+fr = "Le fichier ne contient aucune géométrie."
+
+[upload.too_many_objects]
+de = "Datei enthält {n_objects} Objekte - bitte eine Datei mit genau einem Polygon hochladen (mehrere Objekte pro Datei werden noch nicht unterstützt)."
+fr = "Le fichier contient {n_objects} objets - veuillez téléverser un fichier contenant exactement un polygone (plusieurs objets par fichier ne sont pas encore pris en charge)."
+
+[upload.unsupported_geometry]
+de = "Geometrietyp „{geom_type}“ wird nicht unterstützt - es wird genau ein Polygon erwartet."
+fr = "Le type de géométrie « {geom_type} » n’est pas pris en charge - exactement un polygone est attendu."
+
+[upload.geometry_empty]
+note = "Takes the place of the geometry type in upload.unsupported_geometry when the file's object has no geometry."
+de = "leer"
+fr = "vide"
+
+[upload.polygon_with_hole]
+de = "Polygon mit Loch (Ausschlussbereich) wird noch nicht unterstützt."
+fr = "Un polygone avec trou (zone d’exclusion) n’est pas encore pris en charge."
+
+# ── Variablen (alle Ansichten) ──────────────────────────────────────────────
+
+[variable.depth]
+note = "The simulated quantities. Also used in the export files, which stay German."
+de = "Fliesstiefe"
+fr = "Hauteur d’écoulement"
+
+[variable.velocity]
+de = "Fliessgeschwindigkeit"
+fr = "Vitesse d’écoulement"
+
+[variable.pressure]
+de = "Druck"
+fr = "Pression"
+
+# ── Einheiten ───────────────────────────────────────────────────────────────
+
+[unit.years]
+de = "Jahre"
+fr = "ans"
+
+[unit.per_year]
+de = "1/Jahr"
+fr = "1/an"
+
+[unit.m]
+note = 'A length in metres, e.g. "0.10 m".'
+de = "{value} m"
+fr = "{value} m"
+
+[unit.kb]
+note = "A file size."
+de = "{value} kB"
+fr = "{value} kB"
+
+[unit.mb]
+note = "A file size."
+de = "{value} MB"
+fr = "{value} MB"
+
+[unit.gb]
+note = "A file size."
+de = "{value} GB"
+fr = "{value} GB"
+
+[unit.seconds]
+note = 'A duration in seconds, e.g. "45s" in the estimated and remaining time of a computation.'
+de = "{value}s"
+fr = "{value}s"
+
+[unit.minutes]
+note = 'A duration in minutes, e.g. "1.5 min" in the estimated and remaining time of a computation.'
+de = "{value} min"
+fr = "{value} min"
+
+# ── Karten ──────────────────────────────────────────────────────────────────
+# The texts on the maps. map.chrome.* is on every map, the others on one or a few.
+
+[map.chrome.maplibre_attribution_toggle]
+note = "Map button: shows or hides the map's data sources."
+de = "Quellenangaben ein-/ausblenden"
+fr = "Afficher/masquer les sources"
+
+[map.chrome.maplibre_attribution_feedback]
+note = "Link in the map's data sources."
+de = "Rückmeldung zur Karte"
+fr = "Commentaires sur la carte"
+
+[map.chrome.maplibre_fullscreen_enter]
+note = "Map button tooltip."
+de = "Vollbild"
+fr = "Plein écran"
+
+[map.chrome.maplibre_fullscreen_exit]
+note = "Map button tooltip."
+de = "Vollbild beenden"
+fr = "Quitter le plein écran"
+
+[map.chrome.maplibre_geolocate_find]
+note = "Map button tooltip."
+de = "Eigenen Standort anzeigen"
+fr = "Afficher ma position"
+
+[map.chrome.maplibre_geolocate_unavailable]
+note = "Map button tooltip."
+de = "Standort nicht verfügbar"
+fr = "Position non disponible"
+
+[map.chrome.maplibre_logo]
+note = "Screen reader text of the map library's logo."
+de = "MapLibre-Logo"
+fr = "Logo MapLibre"
+
+[map.chrome.maplibre_map]
+note = "Screen reader name of the map."
+de = "Karte"
+fr = "Carte"
+
+[map.chrome.maplibre_marker]
+note = "Screen reader name of a marker on the map."
+de = "Kartenmarkierung"
+fr = "Marqueur de carte"
+
+[map.chrome.maplibre_reset_bearing]
+note = "Tooltip of the compass button."
+de = "Ziehen, um die Karte zu drehen; klicken, um nach Norden auszurichten"
+fr = "Faire glisser pour faire pivoter la carte ; cliquer pour l’orienter au nord"
+
+[map.chrome.maplibre_zoom_in]
+note = "Tooltip of the + button."
+de = "Hineinzoomen"
+fr = "Zoom avant"
+
+[map.chrome.maplibre_zoom_out]
+note = "Tooltip of the - button."
+de = "Herauszoomen"
+fr = "Zoom arrière"
+
+[map.chrome.maplibre_popup_close]
+note = "Screen reader text of a popup's close button."
+de = "Popup schliessen"
+fr = "Fermer la fenêtre"
+
+[map.chrome.maplibre_scale_feet]
+note = "Unit on the map's scale bar."
+de = "ft"
+fr = "ft"
+
+[map.chrome.maplibre_scale_meters]
+note = "Unit on the map's scale bar."
+de = "m"
+fr = "m"
+
+[map.chrome.maplibre_scale_kilometers]
+note = "Unit on the map's scale bar."
+de = "km"
+fr = "km"
+
+[map.chrome.maplibre_scale_miles]
+note = "Unit on the map's scale bar."
+de = "mi"
+fr = "mi"
+
+[map.chrome.maplibre_scale_nautical_miles]
+note = "Unit on the map's scale bar."
+de = "sm"
+fr = "NM"
+
+[map.chrome.maplibre_globe_enable]
+note = "Map button tooltip."
+de = "Globus einschalten"
+fr = "Activer le globe"
+
+[map.chrome.maplibre_globe_disable]
+note = "Map button tooltip."
+de = "Globus ausschalten"
+fr = "Désactiver le globe"
+
+[map.chrome.maplibre_terrain_enable]
+note = "Map button tooltip."
+de = "Gelände einschalten"
+fr = "Activer le relief"
+
+[map.chrome.maplibre_terrain_disable]
+note = "Map button tooltip."
+de = "Gelände ausschalten"
+fr = "Désactiver le relief"
+
+[map.chrome.maplibre_cooperative_windows]
+note = "Shown over the map when the user scrolls without Ctrl."
+de = "Strg + Mausrad zum Zoomen der Karte"
+fr = "Ctrl + molette pour zoomer sur la carte"
+
+[map.chrome.maplibre_cooperative_mac]
+note = "Shown over the map when the user scrolls without Cmd."
+de = "⌘ + Mausrad zum Zoomen der Karte"
+fr = "⌘ + molette pour zoomer sur la carte"
+
+[map.chrome.maplibre_cooperative_mobile]
+note = "Shown over the map on a touch screen."
+de = "Karte mit zwei Fingern verschieben"
+fr = "Déplacer la carte avec deux doigts"
+
+[map.chrome.legend]
+note = "Title of a map's legend box."
+de = "Legende"
+fr = "Légende"
+
+[map.chrome.legend_hide]
+note = "Tooltip of the button that closes a legend box."
+de = "Ausblenden"
+fr = "Masquer"
+
+[map.chrome.legend_hide_aria]
+note = "Screen reader text of that button; {label} is the legend's title."
+de = "{label} ausblenden"
+fr = "Masquer {label}"
+
+[map.chrome.legend_show]
+note = "Tooltip of the chip that opens a closed legend box again."
+de = "Einblenden"
+fr = "Afficher"
+
+[map.chrome.legend_show_aria]
+note = "Screen reader text of that chip; {label} is the legend's title."
+de = "{label} einblenden"
+fr = "Afficher {label}"
+
+[map.chrome.legend_chip]
+note = "The chip of a closed legend box; {label} is its title. Keep it short."
+de = "{label} ▸"
+fr = "{label} ▸"
+
+[map.chrome.close]
+note = "Close button of a map popup."
+de = "Schliessen"
+fr = "Fermer"
+
+[map.chrome.basemap]
+note = "Map button and title of the background map choice."
+de = "Hintergrundkarte"
+fr = "Fond de carte"
+
+[map.chrome.basemap_lk]
+note = "A background map, by its product name."
+de = "SwissTopo LK"
+fr = "SwissTopo CN"
+
+[map.chrome.basemap_relief]
+note = "A background map, by its product name."
+de = "SwissTopo Relief"
+fr = "SwissTopo Relief"
+
+[map.chrome.basemap_osm]
+note = "A background map, by its product name."
+de = "OpenStreetMap"
+fr = "OpenStreetMap"
+
+[map.chrome.search]
+note = "Title of the coordinate input on the map."
+de = "Koordinateneingabe (LV95)"
+fr = "Saisie de coordonnées (LV95)"
+
+[map.chrome.search_go]
+note = "Button next to the coordinate input. Keep it short."
+de = "Springen"
+fr = "Aller"
+
+[map.chrome.search_go_title]
+note = "Tooltip of that button."
+de = "Springe zu Koordinate"
+fr = "Aller à la coordonnée"
+
+[map.chrome.search_error_format]
+note = "Error under the coordinate input."
+de = "Ungültiges Format - bitte X und Y als Zahl eingeben."
+fr = "Format non valide - veuillez saisir X et Y sous forme de nombres."
+
+[map.chrome.search_error_outside]
+note = "Error under the coordinate input."
+de = "Koordinate liegt ausserhalb der Schweiz (LV95)."
+fr = "La coordonnée se trouve hors de Suisse (LV95)."
+
+[map.chrome.canton]
+note = "Map button that zooms to the whole canton."
+de = "Zoom Kanton Bern"
+fr = "Zoom canton de Berne"
+
+[map.chrome.zoom_level]
+note = "Small readout in a map corner; {zoom} is the zoom level."
+de = "Zoomstufe = {zoom}"
+fr = "Niveau de zoom = {zoom}"
+
+[map.chrome.map_data_error]
+note = "Status line on the map when a layer fails to load."
+de = "Kartendaten konnten nicht geladen werden."
+fr = "Les données de la carte n’ont pas pu être chargées."
+
+[map.chrome.layers]
+note = "Title of the map's layer box."
+de = "Layer"
+fr = "Couches"
+
+[map.tiles.gold_coverage]
+note = "Map layer: the 1 km² Kacheln with finished results."
+de = "Berechnete Kacheln"
+fr = "Tuiles calculées"
+
+[map.tiles.prozessquellen]
+note = "Map layer name."
+de = "Prozessquellen"
+fr = "Sources de processus"
+
+[map.tiles.prozessquelle_popup]
+note = "Popup on a Prozessquelle; {id} is its number."
+de = "Prozessquelle {id}"
+fr = "Source de processus {id}"
+
+[map.raster_opacity.opacity]
+note = "Label of the slider below a raster layer in the map's layer box; it sets how opaque the layer is. Keep it short."
+de = "Deckkraft"
+fr = "Opacité"
+
+[map.raster_opacity.opacity_aria]
+note = "Screen reader name of that slider; {label} is the layer's name."
+de = "{label}: Deckkraft"
+fr = "{label} : opacité"
+
+[map.raster_opacity.opacity_value]
+note = "The slider's value next to it; {percent} is a whole number from 0 to 100."
+de = "{percent} %"
+fr = "{percent} %"
+
+[map.selection.length_m]
+note = "A width or height of the selected area, in metres."
+de = "{value} m"
+fr = "{value} m"
+
+[map.selection.length_km]
+note = "A width or height of the selected area, in kilometres."
+de = "{value} km"
+fr = "{value} km"
+
+[map.selection.selection_size_rect]
+note = "Size of the selected area, on the map and in the sidebar."
+de = "{width} × {height} · {area} m²"
+fr = "{width} × {height} · {area} m²"
+
+[map.selection.selection_size_polygon]
+note = "Size of a drawn polygon; {vertices} is its corners."
+de = "Polygon ({vertices} Eckpunkte) · {width} × {height} · {area} m²"
+fr = "Polygone ({vertices} sommets) · {width} × {height} · {area} m²"
+
+[map.selection.draw_rect]
+note = "Map button. Keep it short: two buttons share one row."
+de = "📐 Rechteck zeichnen"
+fr = "📐 Rectangle"
+
+[map.selection.draw_polygon]
+note = "Map button. Keep it short: two buttons share one row."
+de = "⬠ Polygon zeichnen"
+fr = "⬠ Polygone"
+
+[map.selection.draw_clear]
+note = "Map button that removes the drawn area."
+de = "✖ Löschen"
+fr = "✖ Effacer"
+
+[map.anriss_popup.anriss_popup_title]
+note = "Popup on an Anriss; {id} is its number."
+de = "Anriss {id}"
+fr = "Zone de déclenchement {id}"
+
+[map.anriss_popup.anriss_popup_area]
+note = "Line in that popup; {area} is a number."
+de = "Fläche: {area} m²"
+fr = "Surface : {area} m²"
+
+[map.anriss_popup.anriss_open]
+note = "Button in that popup that opens the Anriss view."
+de = "Anriss öffnen ↗"
+fr = "Ouvrir la zone de déclenchement ↗"
+
+[map.area_classes.area_classes_all]
+note = "Link-styled button next to the size-class filter's title in the Simulierte Ereignisse and IFK maps; ticks every class."
+de = "Alle"
+fr = "Toutes"
+
+[map.area_classes.area_classes_none]
+note = "Button next to it; unticks every class. Shown as \"Alle · Keine\"."
+de = "Keine"
+fr = "Aucune"
+
+[map.area_classes.area_classes_all_aria]
+note = "Screen reader text of the \"Alle\" button."
+de = "Alle Grössenklassen anzeigen"
+fr = "Afficher toutes les classes de taille"
+
+[map.area_classes.area_classes_none_aria]
+note = "Screen reader text of the \"Keine\" button."
+de = "Alle Grössenklassen ausblenden"
+fr = "Masquer toutes les classes de taille"
+
+[map.overview.area]
+note = "Title of the size-class filter in the Simulierte Ereignisse map's legend."
+de = "Fläche"
+fr = "Surface"
+
+[map.overview.anriss_popup_prozessquelle]
+note = "Line in the Anriss popup; {id} is a Prozessquelle."
+de = "Prozessquelle: {id}"
+fr = "Source de processus : {id}"
+
+[map.ifk.gold_coverage]
+note = "Map layer in the IFK map: the Kacheln one can click."
+de = "Berechnete Kacheln (bereit für IFK-Berechnung, klickbar)"
+fr = "Tuiles calculées (prêtes pour le calcul CIF, cliquables)"
+
+[map.ifk.anriss_area]
+note = "Title of the size-class filter in the IFK map's legend."
+de = "Anrissfläche"
+fr = "Surface de déclenchement"
+
+[map.ifk.anriss_outline]
+note = "Map layer: the outline of all Anrisse that reach the selected area."
+de = "Anrisse, die das Gebiet erreichen"
+fr = "Zones de déclenchement qui atteignent la zone"
+
+[map.ifk.anriss_legend_title]
+note = "Legend title of the coloured Anriss circles."
+de = "Σ Ereignisrate λ [1/Jahr] (log)"
+fr = "Σ taux d’événements λ [1/an] (log)"
+
+[map.ifk.anriss_popup_rate]
+note = "Line in the Anriss popup; {rate} is a number."
+de = "Σ Ereignisrate λ [1/Jahr]: {rate}"
+fr = "Σ taux d’événements λ [1/an] : {rate}"
+
+[map.ifk.pixel_popup_title]
+note = "Popup on a clicked pixel."
+de = "IFK an diesem Pixel berechnen"
+fr = "Calculer la CIF en ce pixel"
+
+[map.ifk.pixel_popup_coords]
+note = "Line in that popup; {x} and {y} are LV95 coordinates."
+de = "X: {x}, Y: {y} (LV95)"
+fr = "X : {x}, Y : {y} (LV95)"
+
+[map.ifk.ifk_compute]
+note = "Button in that popup, and in the area popup."
+de = "IFK berechnen"
+fr = "Calculer la CIF"
+
+[map.ifk.area_popup_title]
+note = "Popup on a drawn area, and on a click inside the selected area; same action as the sidebar's ifk_area.submit."
+de = "IFK des Gebiets berechnen"
+fr = "Calculer la CIF de la zone"
+
+[map.ifk.area_popup_too_large]
+note = "Line in the area popup when the area is over the limits; the sidebar shows the details."
+de = "Gebiet zu gross - Details in der Seitenleiste."
+fr = "Zone trop grande - détails dans la barre latérale."
+
+[map.anriss.variable]
+note = "Title of the variable switch on the Anriss map."
+de = "Visualisierungsvariable"
+fr = "Variable affichée"
+
+[map.anriss.cell_value]
+note = "Hover text of a pixel; {label} is the variable, {value} its value."
+de = "{label}: {value}"
+fr = "{label} : {value}"
+
+[map.gs.mask_default]
+note = "Map layer name when the mask has no label of its own."
+de = "Betroffenheitsmaske"
+fr = "Masque des pixels touchés"
+
+[map.gs.mask_error]
+note = "Status line on the map."
+de = "Betroffenheitsmaske konnte nicht geladen werden."
+fr = "Le masque des pixels touchés n’a pas pu être chargé."
+
+[map.gs.buildings]
+note = "Map layer name."
+de = "Gebäude (Simulationsstart)"
+fr = "Bâtiments (départ de la simulation)"
+
+[map.gs.building_hover]
+note = "Hover text of a building; {id} is its number, {area} its area."
+de = "Gebäude {id} · {area} m²"
+fr = "Bâtiment {id} · {area} m²"
+
+[map.gs.cells_default]
+note = "Map layer name when the pixel layer has no label of its own."
+de = "Pixel"
+fr = "Pixels"
+
+[map.raster.raster_layer]
+note = "Map layer name in the layer box: the raster of a Raster-Karten job or the Raster-Derivate preview."
+de = "Raster"
+fr = "Raster"
+
+[map.raster.var_switch_title]
+note = "Title of the variable switch on the Raster-Karten map."
+de = "📊 Ebene anzeigen"
+fr = "📊 Afficher la couche"
+
+[map.raster.legend_title_unit]
+note = "Legend title: {label} is the layer, {unit} its unit."
+de = "{label} [{unit}]"
+fr = "{label} [{unit}]"
+
+[map.raster.log_scale]
+note = "Note under a legend with a logarithmic scale. Keep it short."
+de = "log. Skala"
+fr = "échelle log."
+
+[map.raster.mask_ticks]
+note = "Legend text of a yes/no layer."
+de = "betroffen (transparent = nicht betroffen / keine Daten)"
+fr = "touché (transparent = non touché / pas de données)"
+
+[map.raster.pixel_value]
+note = "Hover text of a pixel: layer, value and unit."
+de = "{label}: {value} {unit}"
+fr = "{label} : {value} {unit}"
+
+[map.raster.pixel_value_unitless]
+note = "Hover text of a pixel without unit."
+de = "{label}: {value}"
+fr = "{label} : {value}"
+
+[map.raster.pixel_mask_yes]
+note = "Hover text of a pixel of a yes/no layer."
+de = "{label}: ja"
+fr = "{label} : oui"
+
+[map.raster.pixel_mask_no]
+note = "Hover text of a pixel of a yes/no layer."
+de = "{label}: nein"
+fr = "{label} : non"
+
+[map.raster.crop_loading]
+note = "Status line on the map."
+de = "Rasterausschnitt wird geladen …"
+fr = "Chargement de l’extrait raster …"
+
+[map.raster.crop_error]
+note = "Status line on the map."
+de = "Rasterausschnitt konnte nicht geladen werden."
+fr = "L’extrait raster n’a pas pu être chargé."
+
+[map.raster.derivate_error]
+note = "Status line on the map."
+de = "Rasterdaten konnten nicht geladen werden."
+fr = "Les données raster n’ont pas pu être chargées."
+
+[map.raster.image_error]
+note = "Status line on the map."
+de = "Rasterbild konnte nicht geladen werden."
+fr = "L’image raster n’a pas pu être chargée."
+
+[map.raster.values_error]
+note = "Status line on the map."
+de = "Pixelwerte konnten nicht geladen werden."
+fr = "Les valeurs des pixels n’ont pas pu être chargées."

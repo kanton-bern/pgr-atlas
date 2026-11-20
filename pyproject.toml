@@ -1,0 +1,108 @@
+# The app's dependencies and tool settings, managed with uv (`uv sync`; `uv.lock`
+# is committed). The app is not an installable package (package = false below).
+
+[project]
+name = "pgr-atlas"
+version = "0"   # releases are git tags (README "Releasing"), not this field
+requires-python = ">=3.12,<3.13"   # the image's python:3.12-slim
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+# Exact pins. Dependabot proposes updates (.github/dependabot.yml), except minor and
+# major versions of the geo stack (GDAL in rasterio/pyogrio, DuckDB, numpy),
+# which need a manual test before they move.
+dependencies = [
+    "streamlit==1.67.0",
+    "duckdb==2.0.0",
+    "geopandas==1.1.4",
+    "pyogrio==0.12.1",       # not imported here: geopandas reads files through it
+    "rasterio==1.4.4",
+    "shapely==2.1.2",
+    "pyproj==3.7.2",
+    "matplotlib==3.11.2",
+    "pandas==2.3.3",
+    # 2.5 deprecates setting an array's shape, which rasterio 1.4's read(band) does:
+    # move to 2.5 with rasterio 1.5.
+    "numpy==2.4.6",
+    # Not imported here: streamlit and geopandas need it at runtime. 26.0.1 is the
+    # first release with the Brotli fix for CVE-2026-111497.
+    "pyarrow==26.0.1",
+    "boto3==1.44.2",       # brings the matching botocore (imported for its exceptions)
+    "tornado==6.6.1",
+    "altair==6.3.0",
+    "vl-convert-python==1.9.0.post1",
+    "python-dotenv==1.2.4",
+    "pillow==13.0.0",
+    # Shared data-lake / S3 / derivate code, also used by the pipeline. Lives in
+    # this repo (packages/probe-core, a uv workspace member, see [tool.uv] below).
+    "probe-core",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "ruff==0.17.5",
+    # Matches the CI container (playwright/python in ci.yml); move both together.
+    "playwright==1.63.0",
+    "pytest-playwright==0.9.0",
+]
+
+[tool.uv]
+package = false
+
+# packages/probe-core is its own installable package, so the pipeline can install
+# it from this repo without the app. uv.lock covers both.
+[tool.uv.workspace]
+members = ["packages/probe-core"]
+
+[tool.uv.sources]
+probe-core = { workspace = true }
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+# Explicit instead of ruff's default, so a ruff upgrade does not change the gate.
+select = ["E4", "E7", "E9", "F", "C901", "PLR0913", "PLR0915"]
+
+# The repo's function limits: complexity <= 8, <= 5 arguments. PLR0915 (> 50
+# statements) stands in for the 100-line limit, which ruff has no rule for.
+[tool.ruff.lint.mccabe]
+max-complexity = 8
+
+[tool.ruff.lint.pylint]
+max-args = 5
+
+# Functions that were over the limits when the rules were added. Each entry goes
+# when its function is split; new code must pass without one.
+[tool.ruff.lint.per-file-ignores]
+"app/anriss_export.py" = ["PLR0913"]         # simulation_file_stem
+"app/anriss_map_component.py" = ["PLR0913"]  # anriss_result_map
+"app/derivate_bbox_server.py" = ["PLR0913"]  # _render
+"app/ifk_map_component.py" = ["PLR0913"]     # ifk_pixel_map
+"app/overview_component.py" = ["PLR0913"]    # maplibre_overview
+"app/pmtiles_server.py" = ["C901"]           # _S3RangeProxyHandler.get
+"app/polygon_upload.py" = ["C901"]           # _parse_folder
+"app/raster_bbox_component.py" = ["PLR0913"] # raster_bbox_map
+"tools/s3/s3m.py" = ["C901", "PLR0915"]      # cmd_delete, build_parser
+"packages/probe-core/src/probe_core/derivate/derivate_lake.py" = ["C901", "PLR0913"]  # parse_band, hive_unit_key
+# compute_ifk_default, build_exceedance_curves, raster_from_curves, build_raster_for_bbox,
+# write_area_ereignisse
+"packages/probe-core/src/probe_core/derivate/ifk_and_raster.py" = ["PLR0913"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "packages/probe-core/tests"]
+# The app modules import each other as top-level modules (see run_app.py).
+pythonpath = ["app"]
+# e2e and apptest need a working data lake (S3 credentials); run them explicitly
+# with -m e2e and -m apptest (see tests/README.md).
+addopts = '-m "not e2e and not apptest"'
+filterwarnings = [
+    # rasterio 1.4.3's own from_origin(), reached through probe-core's raster code.
+    "ignore:Use `@` matmul instead of `\\*` mul operator:PendingDeprecationWarning:rasterio.transform",
+]
+markers = [
+    "components: map-component tests (no Streamlit/S3 needed)",
+    "e2e: full-app tests against a running Streamlit app (needs S3 credentials)",
+    "apptest: app.py run in-process by Streamlit's AppTest (needs S3 credentials)",
+]

@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* View-specific styles; the shared chrome is in shared/map-controls.css. */
+
+      /* Value legend of the selected variable, bottom centre like IFK's
+       #anriss-legend and Raster-Karten's #raster-legend. */
+      #value-legend {
+        position: absolute;
+        bottom: 34px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: var(--mc-bg);
+        border-radius: 9px;
+        padding: 10px 26px 9px 16px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+        min-width: 220px;
+        font-family: var(--mc-font);
+        user-select: none;
+      }
+      #value-legend .vl-title {
+        font-size: var(--mc-title-size);
+        font-weight: 700;
+        color: var(--pgr-text);
+        margin-bottom: 6px;
+      }
+      #value-legend .vl-bar {
+        height: 16px;
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+      }
+      #value-legend .vl-ticks {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--mc-body-size);
+        color: #333;
+        margin-top: 4px;
+        font-weight: 600;
+      }
+      /* Variable switch, directly above the layer box (the same buttons as
+       Raster-Karten's #var-switch). */
+      #var-box {
+        position: relative;
+        background: var(--mc-bg);
+        border-radius: var(--mc-radius);
+        padding: 8px 22px 8px 10px;
+        font-family: var(--mc-font);
+        box-shadow: var(--mc-shadow);
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      /* <button>s that look like list rows, at least 24 px high (WCAG 2.5.8). */
+      .var-btn {
+        display: block;
+        width: 100%;
+        min-height: 24px;
+        padding: 4px 10px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        font-size: var(--mc-body-size);
+        color: var(--pgr-text);
+        transition: background 0.12s;
+      }
+      .var-btn:hover {
+        background: #f0f0f0;
+      }
+      .var-btn.active {
+        background: var(--pgr-brand);
+        color: #fff;
+      }
+      /* Line swatch of the outline layers in the layer box. */
+      .legend-line {
+        width: 16px;
+        height: 0;
+        border-top-width: 2px;
+        flex-shrink: 0;
+      }
+      /* The value under the pointer. */
+      .cell-tooltip .maplibregl-popup-content {
+        padding: 4px 8px;
+        font-family: var(--mc-font);
+        font-size: var(--mc-body-size);
+        pointer-events: none;
+      }
+      .cell-tooltip .maplibregl-popup-tip {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="value-legend" hidden>
+      <button type="button" class="legend-close" data-close-target="value-legend">✕</button>
+      <div class="vl-title" id="vl-title"></div>
+      <div class="vl-bar" id="vl-bar"></div>
+      <div class="vl-ticks">
+        <span id="vl-min"></span><span id="vl-mid"></span><span id="vl-max"></span>
+      </div>
+    </div>
+    <div id="tl-stack">
+      <div id="var-box">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="var-box"
+          data-open-label="variable"
+        >
+          ✕
+        </button>
+        <!-- data-text names the label each element shows (the labels render arg). -->
+        <div class="mc-ctrl-title" data-text="variable"></div>
+        <div id="var-btns"></div>
+      </div>
+      <div id="legend">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="legend"
+          data-open-label="layers"
+        >
+          ✕
+        </button>
+        <div class="mc-ctrl-title" data-text="layers"></div>
+        <div id="layer-rows"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

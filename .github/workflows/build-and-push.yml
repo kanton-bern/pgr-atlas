@@ -1,0 +1,227 @@
+# Builds app/ + docker/ into the image ghcr.io/skerlakanalytics/pgr-atlas and
+# pushes it to GHCR.
+#
+# Tags, depending on what triggered the build:
+#   git tag vX.Y.Z pushed    -> :vX.Y.Z and :latest    releases: what the Bedag
+#                                                       stages (test, prod) pin
+#   push to main             -> :main                  rolling: newest main
+#   manual run on a branch   -> :<branch>              rolling: newest build of it
+#     (Actions tab -> "Run workflow"): for trying an unmerged branch at Bedag in a
+#     throwaway pod, without deploying it
+#
+# Deliberately no per-commit tags (:main-<sha>): tagged images are never pruned,
+# so they would pile up with every push. A rolling tag leaves its previous image
+# untagged, and cleanup-images.yml deletes that after 1 day. What stays in the
+# registry long-term: the releases, :latest, :main, and one tag per branch that
+# was built manually. The commit of any image is still recorded in its
+# org.opencontainers.image.revision label (set in the build step below).
+#
+# Docs-only pushes to main (*.md, docs/) don't build: the image would be the
+# same as before. Release tags always build --
+# GitHub doesn't evaluate path filters for tag pushes ("Path filters are not
+# evaluated for pushes of tags.", workflow syntax docs, on.push.paths).
+#
+# Self-contained: the app code lives in this repo's own app/ -- pgr-atlas is the
+# single source of truth, no cross-repo checkout or PAT needed.
+#
+# A release is gated on CI: for a version tag, ci.yml (hooks, lint, workflow
+# audit), unit.yml (unit tests) and frontend.yml (frontend/ checks and the
+# map-component tests) run first, and the image is only built when all three
+# pass. A push to main builds :main without them: its pull request ran CI
+# already.
+#
+# After a release image is pushed, the stage-pull-requests job opens one pull
+# request per Bedag stage that sets its image tag to the new version.
+name: Build and push
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    # Only what ends up in the image builds one: docs, tests, deployment
+    # settings and workflows don't. (Tag pushes ignore path filters.)
+    paths-ignore: ["**.md", "docs/**", "tests/**", "deploy/**", ".github/**"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/skerlakanalytics/pgr-atlas
+
+jobs:
+  # The three CI workflows, in parallel, only for a release. A push to main was
+  # checked on its pull request, and running CI a second time doubled the
+  # Actions minutes of every merge.
+  #
+  # zizmor's self-repository audit prefers `$/...`, but actionlint (1.7.12)
+  # rejects that syntax. A job-level call is resolved from the triggering
+  # commit, not from files a step put on the runner.
+  ci:
+    if: github.ref_type == 'tag'
+    uses: ./.github/workflows/ci.yml # zizmor: ignore[self-repository]
+
+  unit:
+    if: github.ref_type == 'tag'
+    uses: ./.github/workflows/unit.yml # zizmor: ignore[self-repository]
+
+  frontend:
+    if: github.ref_type == 'tag'
+    uses: ./.github/workflows/frontend.yml # zizmor: ignore[self-repository]
+
+  build-and-push:
+    needs: [ci, unit, frontend]
+    # After all three for a release; straight away where they were skipped
+    # (main, manual).
+    if: >-
+      ${{ !cancelled()
+      && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
+      && (needs.unit.result == 'success' || needs.unit.result == 'skipped')
+      && (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+          package-manager-cache: false
+
+      # The image serves the built pages in app/<component>/dist/; Node stays out of it.
+      - name: Build the map components (frontend/)
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      - name: Stage build context
+        run: |
+          set -euo pipefail
+          cd docker
+          rm -rf context
+          cp -r ../app context
+          find context -name __pycache__ -type d -exec rm -rf {} + || true
+          rm -rf project && mkdir project && cp ../pyproject.toml ../uv.lock project/
+          # probe-core, the workspace package the lockfile installs from its own folder
+          cp -r ../packages project/
+
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "${REF_TYPE}" = "tag" ]; then
+            TAGS="${IMAGE}:${REF_NAME},${IMAGE}:latest"
+            VERSION="${REF_NAME}"
+          else
+            # slashes in branch names are not valid in an image tag
+            SLUG=$(echo "${REF_NAME}" | tr '/' '-')
+            TAGS="${IMAGE}:${SLUG}"
+            VERSION="${SLUG}-${GITHUB_SHA::7}"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Tags: ${TAGS}  Version: ${VERSION}"
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          # shown in the app's sidebar footer
+          build-args: |
+            PGR_ATLAS_VERSION=${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      # Known vulnerabilities in the image: its OS packages, Python packages
+      # and the binaries copied in. Fails, and so nothing is pushed, only for
+      # HIGH or CRITICAL findings that have a fixed version. Accepted findings
+      # go into .trivyignore, each with its reason. Trivy runs as a pinned
+      # image, like gitleaks in ci.yml.
+      - name: Scan the image (Trivy)
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$GITHUB_WORKSPACE/.trivyignore:/.trivyignore:ro" \
+            ghcr.io/aquasecurity/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa \
+            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --ignorefile /.trivyignore --exit-code 1 "${TAGS%%,*}"
+
+      - name: Push
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          for tag in ${TAGS//,/ }; do docker push "$tag"; done
+
+  # For a release: one pull request per Bedag stage that sets its image tag to
+  # the new version (deployment-process.md, section 5). Only after the push
+  # above, so a stage is never pointed at an image that doesn't exist. Opened
+  # with the workflow's own token, so ci.yml on these pull requests is held
+  # until a maintainer approves the run (seen on v0.8.9). The release itself
+  # was checked by the three CI workflows above, and by e2e.yml and
+  # apptest.yml on the tag.
+  stage-pull-requests:
+    needs: build-and-push
+    if: ${{ github.ref_type == 'tag' && needs.build-and-push.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the two branches
+      pull-requests: write # open the pull requests and assign them
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+      # Who pushed the tag.
+      ACTOR: ${{ github.actor }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Open a pull request per stage
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for stage in test prod; do
+            file="deploy/stages/${stage}/pgr-atlas/values.yaml"
+            branch="release/${stage}-${TAG}"
+            if [ -n "$(git ls-remote --heads origin "$branch")" ]; then
+              echo "${branch} exists already, skipped"
+              continue
+            fi
+            previous=$(grep -A3 'repository: .*/pgr-atlas$' "$file" | grep -o 'tag: "[^"]*"' | cut -d'"' -f2)
+            git switch --quiet --create "$branch" origin/main
+            .github/scripts/set-image-tag.sh "$file" "$TAG"
+            git commit --quiet --all --message "${stage^} stage: image ${TAG}"
+            git push --quiet origin "$branch"
+            url=$(STAGE="$stage" PREVIOUS="$previous" envsubst < .github/scripts/stage-pull-request.md \
+              | gh pr create --base main --head "$branch" \
+                  --title "${stage^} stage: image ${TAG}" --body-file -)
+            echo "${stage}: ${url}"
+            # An actor that can't be assigned (a bot) must not fail the release.
+            gh api --silent --method POST "repos/${GITHUB_REPOSITORY}/issues/${url##*/}/assignees" \
+              -f "assignees[]=${ACTOR}" || echo "::warning::could not assign ${ACTOR}"
+          done

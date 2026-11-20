@@ -1,0 +1,28 @@
+# exclude compiled python files
+*.pyc
+
+.DS_Store
+.idea
+
+docker/context/
+docker/project/
+
+# kubeconfig files -- live cluster credentials, never commit
+*kubeconfig*
+
+# local credentials (e.g. GITHUB_PAT for docker login to GHCR), never commit
+.env
+
+# local venv and VSC
+.venv/
+settings.json
+
+# Local assistant settings and personal context
+/CLAUDE.local.md
+/.claude/
+/.worktreeinclude
+
+# frontend/ (Node, build-only)
+frontend/node_modules/
+# Map components built from frontend/ (npm run build)
+app/*/dist/

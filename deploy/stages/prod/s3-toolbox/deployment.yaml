@@ -1,0 +1,228 @@
+# The s3-toolbox: an idle pod with s3m, rclone and the AWS CLI
+# (tools/s3/README.md), for managing the S3 buckets at Hosttech and Bedag and
+# copying between them. It is the only place that reaches Bedag's S3 besides
+# the app. Use it with:
+#   kubectl -n aw3-pgr-atlas-prod-apps exec -it deploy/s3-toolbox -- bash
+#
+# Same as ../../test/s3-toolbox/deployment.yaml except for the Bedag keypair and
+# the comments; keep the two in step.
+#
+# Plain manifest, not part of the app's HelmRelease: it has its own image and
+# release cycle and must not restart with the app. Its own labels, so the app's
+# Services (which select name=pgr-atlas, component=app) never route to it.
+#
+# A restart kills running copy jobs (rerunning the same `s3m copy` continues).
+# Merging a change to this file restarts the pod -- check `s3m jobs` first.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3-toolbox
+  labels:
+    app.kubernetes.io/name: s3-toolbox
+    app.kubernetes.io/part-of: pgr-atlas
+spec:
+  replicas: 1
+  # Never two toolboxes at once: each has its own job list, a copy started in
+  # the old one would just be killed with it.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: s3-toolbox
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: s3-toolbox
+        app.kubernetes.io/part-of: pgr-atlas
+      # Bump whenever hosttech-key-secret.yaml changes. The key reaches the pod
+      # as env vars, read only when it starts, so a changed Secret alone leaves
+      # the old key in the running pod; a new value here restarts it.
+      annotations:
+        pgr-atlas/hosttech-key-rotated: "2026-10-24"
+    spec:
+      # Nothing in the pod talks to the Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 10001
+      containers:
+        - name: toolbox
+          # ghcr.io/skerlakanalytics/pgr-atlas-s3tools (public), through Bedag's
+          # registry mirror like the app. New version: tag s3tools-vX.Y.Z on
+          # main, wait for CI, change this line.
+          image: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas-s3tools:v0.1.5
+          imagePullPolicy: IfNotPresent
+          # Lets `kubectl attach` / k9s shell work against the toolbox
+          # container. Without this, K9s reports "Unable to use a TTY -
+          # container toolbox did not allocate one".
+          stdin: true
+          tty: true
+          env:
+            # Bedag: the S3 tenant's admin keypair, created by Bedag's operator.
+            # On prod the S3Tenant is Bedag's, not in our Git (the Secret
+            # appeared 2026-09-29; key names ASSUMED to match test's, we may not
+            # read it). It lists every bucket in the tenant and may switch
+            # versioning -- and delete anything, so s3m asks before every change.
+            - name: S3M_BEDAG_ADMIN_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aw3-pgr-atlas-s3-prod-s3-admin-keypair
+                  key: accessKey
+            - name: S3M_BEDAG_ADMIN_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aw3-pgr-atlas-s3-prod-s3-admin-keypair
+                  key: secretKey
+            # Hosttech: the toolbox's own key, from the SOPS-encrypted Secret
+            # in hosttech-key-secret.yaml (since 2026-10-09; the app has no
+            # Hosttech key any more). Like every Hosttech key it reads and
+            # writes every Hosttech bucket; s3m treats Hosttech as read-only
+            # (S3M_READONLY_REMOTES).
+            - name: S3M_HOSTTECH_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-toolbox-hosttech
+                  key: accessKey
+            - name: S3M_HOSTTECH_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-toolbox-hosttech
+                  key: secretKey
+            # Two narrower keys for the bucket aw3-pgr-atlas-prod, as their own
+            # remotes next to the tenant admin key (bedag_admin): bedag_ro reads only,
+            # bedag_rw reads and writes. From the Secrets Bedag's operator
+            # creates for ../pgr-atlas/s3/access-readonly.yaml and
+            # access-readwrite.yaml. They can't list buckets, so name the
+            # bucket: `s3m ls bedag_ro:aw3-pgr-atlas-prod/`.
+            - name: S3M_REMOTES
+              value: "hosttech,bedag_admin,bedag_ro,bedag_rw,bedag_archive_ro,bedag_archive_rw"
+            # Remotes s3m itself refuses to change, shown as "read-only" in
+            # `s3m remotes`. bedag_ro's key is refused by Bedag's S3 anyway;
+            # this stops s3m before it asks.
+            - name: S3M_READONLY_REMOTES
+              value: "hosttech,bedag_ro,bedag_archive_ro"
+            - name: S3M_BEDAG_RO_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_ENDPOINT_URL
+            - name: S3M_BEDAG_RO_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_REGION
+            - name: S3M_BEDAG_RO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_ACCESS_KEY_ID
+            - name: S3M_BEDAG_RO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-ro
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: S3M_BEDAG_RW_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-rw
+                  key: AWS_ENDPOINT_URL
+            - name: S3M_BEDAG_RW_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-rw
+                  key: AWS_REGION
+            - name: S3M_BEDAG_RW_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-rw
+                  key: AWS_ACCESS_KEY_ID
+            - name: S3M_BEDAG_RW_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-rw
+                  key: AWS_SECRET_ACCESS_KEY
+            # The same pair for the archive bucket aw3-pgr-atlas-prod-archive
+            # (../pgr-atlas/s3/access-archive-readonly.yaml and
+            # access-archive-readwrite.yaml): bedag_archive_ro and
+            # bedag_archive_rw.
+            - name: S3M_BEDAG_ARCHIVE_RO_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-archive-ro
+                  key: AWS_ENDPOINT_URL
+            - name: S3M_BEDAG_ARCHIVE_RO_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-archive-ro
+                  key: AWS_REGION
+            - name: S3M_BEDAG_ARCHIVE_RO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-archive-ro
+                  key: AWS_ACCESS_KEY_ID
+            - name: S3M_BEDAG_ARCHIVE_RO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-atlas-archive-ro
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: S3M_BEDAG_ARCHIVE_RW_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-archive-rw
+                  key: AWS_ENDPOINT_URL
+            - name: S3M_BEDAG_ARCHIVE_RW_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-archive-rw
+                  key: AWS_REGION
+            - name: S3M_BEDAG_ARCHIVE_RW_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-archive-rw
+                  key: AWS_ACCESS_KEY_ID
+            - name: S3M_BEDAG_ARCHIVE_RW_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-pgr-datatransfer-archive-rw
+                  key: AWS_SECRET_ACCESS_KEY
+            # Egress: Hosttech through Bedag's proxy (it allows *.f712.gos3.io);
+            # Bedag's S3 (.be.ch) directly, allowed by allow-egress-s3-toolbox.
+            # Leading dot, not "*.": Python ignores "*.domain" entries.
+            - name: http_proxy
+              value: "http://proxy.kb-bedag.ch:8080"
+            - name: https_proxy
+              value: "http://proxy.kb-bedag.ch:8080"
+            - name: no_proxy
+              value: "localhost, 127.0.0.1, kubernetes.default.svc, .svc.cluster.local, .be.ch, .kb-bedag.ch"
+          # Idle it needs almost nothing; the quota counts only requests
+          # (prod's is not readable for us; test's is 4 CPU / 8Gi, the app
+          # requests 1 CPU / 2Gi).
+          # The limits leave room for rclone during a copy.
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+              ephemeral-storage: 25Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: work
+              mountPath: /work
+      volumes:
+        # Downloads and the copy jobs' logs (S3M_STATE_DIR=/work/.s3m); gone
+        # when the pod goes. Copies stream S3 to S3 and need no disk.
+        - name: work
+          emptyDir:
+            sizeLimit: 20Gi

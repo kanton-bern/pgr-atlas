@@ -1,0 +1,18 @@
+apiVersion: s3.bedag.ch/v1alpha1
+kind: S3Tenant
+metadata:
+  name: aw3-pgr-atlas-s3-prod
+  namespace: aw3-pgr-atlas-prod-apps
+spec:
+  # Referenziere den StorageGRID, auf welchem die S3Buckets des S3Tenants erstellt werden sollen
+  # Standardmässig empfehlen wir immer den "primary-grid" zu verwenden
+  storageGridRef:
+    name: primary-grid
+
+  # Referenziere die S3TenantClass, über welche die S3Buckets vom S3Tenant erreicht werden können
+  # Das ist jeweils der ClusterContext, von welchem aus du dich mit den S3Buckets verbinden möchtest
+  s3TenantClassName: kakbfe
+
+
+  # Optional: Definiere ein StorageQuota für den S3Tenant, damit die S3Buckets des S3Tenants nicht mehr als die angegebene Menge an Speicherplatz belegen können
+  storageQuota: 20000Gi

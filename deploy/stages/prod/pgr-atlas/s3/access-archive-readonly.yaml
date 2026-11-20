@@ -1,0 +1,17 @@
+# Read-only key for the archive bucket, the same policy as access-readonly.yaml
+# has for aw3-pgr-atlas-prod. An S3Access belongs to one bucket, so the archive
+# bucket needs its own. The operator writes it into the Secret named in
+# destinationSecret; the s3-toolbox uses it as the remote bedag_archive_ro.
+apiVersion: s3.bedag.ch/v1alpha1
+kind: S3Access
+metadata:
+  name: pgr-atlas-archive-ro
+spec:
+  s3BucketRef:
+    name: aw3-pgr-atlas-prod-archive
+  policyRefs:
+    - kind: GlobalS3Policy
+      name: readonly
+  connectionDetails:
+    mode: All
+    destinationSecret: s3-pgr-atlas-archive-ro

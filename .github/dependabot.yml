@@ -1,0 +1,86 @@
+# Keeps the SHA-pinned actions in .github/workflows/, frontend/'s npm packages, the
+# digest-pinned base images of both Dockerfiles and the app's Python packages current.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+  # frontend/ (build-only Node tooling and the bundled map libraries).
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # TypeScript majors wait until typescript-eslint supports them (8.70.1:
+    # typescript <6.1.0).
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm:
+        patterns: ["*"]
+  # Base images of the app, s3tools and proxy images (pinned by digest).
+  - package-ecosystem: docker
+    directories: ["/docker", "/tools/s3", "/tools/proxy"]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # Python stays on 3.12 (pyproject.toml: requires-python <3.13, the lockfile is
+    # resolved for it); only 3.12.x patch releases come through.
+    ignore:
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # nginx (tools/proxy) stays on its stable branch, which has even minor
+      # versions (1.30, 1.32); the odd ones in between are mainline. Only
+      # patch releases come through; moving to the next stable is done by hand.
+      - dependency-name: nginxinc/nginx-unprivileged
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      docker:
+        patterns: ["*"]
+  # The app's Python packages (pyproject.toml pins and uv.lock, which also covers
+  # packages/probe-core); tools/s3 has its own lockfile, not covered here.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # The geo stack (GDAL in rasterio/pyogrio, DuckDB, numpy) needs a manual
+    # test before it moves: only patch releases come through.
+    ignore:
+      - dependency-name: rasterio
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: pyogrio
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: geopandas
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: shapely
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: pyproj
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: duckdb
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: numpy
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # Majors change behaviour on the data path (pandas 3 returns NaN where 2
+      # returned None), and Dependabot PRs don't run e2e: by hand.
+      - dependency-name: pandas
+        update-types: ["version-update:semver-major"]
+      # pyarrow has no entry on purpose: every release of it is a major
+      # version, so holding majors would freeze it on known vulnerabilities.
+      # Run e2e and AppTest locally before merging one of its updates.
+      # Moves with the CI containers' tag (frontend.yml, e2e.yml), by hand.
+      - dependency-name: playwright
+      - dependency-name: pytest-playwright
+    groups:
+      python:
+        patterns: ["*"]

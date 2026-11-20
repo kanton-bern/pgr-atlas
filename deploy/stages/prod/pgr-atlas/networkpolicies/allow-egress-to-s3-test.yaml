@@ -1,0 +1,28 @@
+# Egress policy for the app pods at Bedag.
+#
+# What this allows: the Bedag S3 grid (x7ba-s3-kakbfe.infra.be.ch:10443,
+# provisioned via ../s3/ for later use). What it does NOT need to allow,
+# verified 2026-09-17 from inside a pod selected by this very policy:
+#   - DNS resolves anyway -> allowed cluster-wide by Bedag
+#   - proxy.kb-bedag.ch:8080 is reachable -> allowed cluster-wide
+#   - Hosttech S3 today goes THROUGH that proxy (direct f712.gos3.io:443 is
+#     blocked; CONNECT via the proxy returns 200 for f712.gos3.io and
+#     <bucket>.f712.gos3.io, 403 for non-allow-listed hosts like example.com)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-egress-s3
+spec:
+  egress:
+  - toFQDNs:
+      # Setze hier den Endpunktnamen, über welchen der S3Bucket erreichbar ist. Die Details hierzu findest du in im Status.s3EndpointConfig.defaultAddress des S3Buckets
+    - matchName: x7ba-s3-kakbfe.infra.be.ch
+    toPorts:
+    - ports:
+        # Setze hier den Port, über welchen der S3Bucket erreichbar ist. Die Details hierzu findest du in im Status.s3EndpointConfig.port des S3Buckets
+      - port: "10443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pgr-atlas
+      app.kubernetes.io/component: app

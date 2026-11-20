@@ -1,0 +1,94 @@
+# The map components (frontend/): ESLint, Prettier, type check, Vitest and a
+# build, then the map-component tests (tests/components) in Chromium against
+# the built pages. One job in the Playwright container, about four minutes.
+#
+# Runs on a pull request that changes what these checks read, at the same time
+# as ci.yml, and for a release (build-and-push.yml calls it for version tags).
+name: Frontend
+
+on:
+  pull_request:
+    # GitHub reads the patterns in order and the last match wins, so `!**.md`
+    # comes after the patterns it narrows.
+    paths:
+      - "frontend/**"
+      - "tests/components/**"
+      - "app/styles/tokens.css"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/frontend.yml"
+      - "!**.md"
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels the run for the one before. Runs called
+# from build-and-push.yml each get their own group, so none is cancelled.
+concurrency:
+  group: frontend-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    # Playwright's image has Chromium and its system packages, which
+    # `playwright install --with-deps` took from Ubuntu's mirror (28 s to 6 min).
+    # Its tag matches playwright in uv.lock (ci.yml checks it); move both together.
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+          package-manager-cache: false
+
+      - name: Install (package-lock.json)
+        working-directory: frontend
+        run: npm ci
+
+      - name: ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Prettier
+        working-directory: frontend
+        run: npm run format:check
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Vitest
+        working-directory: frontend
+        run: npm test
+
+      # tests/components open the built pages in app/<component>/dist/.
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.19"
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: false
+
+      - name: Install app and dev dependencies (uv.lock)
+        run: uv sync --frozen
+
+      # Nothing to do: the image's tag matches uv.lock (checked in ci.yml).
+      - name: Check Chromium
+        run: python -m playwright install chromium
+
+      # --durations lists the slowest tests.
+      - name: Pytest
+        run: pytest tests/components --durations=25

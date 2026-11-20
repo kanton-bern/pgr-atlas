@@ -1,0 +1,26 @@
+#!/bin/sh
+# Runs the two ruff commands CI runs (ci.yml, "Ruff lint" and "Ruff format"),
+# on the staged Python files only, so a commit that CI would reject does not
+# get made. Turn it on once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# A plain git hook and not an entry in .pre-commit-config.yaml: that file's
+# first repo is Bedag's, which our machines cannot reach, so pre-commit does
+# not run locally. Skip the hook once with `git commit --no-verify`.
+files=$(git diff --cached --name-only --diff-filter=ACMR -- 'app/*.py' 'tests/*.py' 'tools/*.py' 'packages/*.py')
+[ -z "$files" ] && exit 0
+
+if [ -x .venv/bin/ruff ]; then
+    ruff=.venv/bin/ruff
+elif command -v ruff >/dev/null 2>&1; then
+    ruff=ruff
+else
+    echo "pre-commit hook: ruff not found (run \`uv sync\`); skipping the checks" >&2
+    exit 0
+fi
+
+# shellcheck disable=SC2086  # word splitting is wanted: one argument per file
+$ruff check $files || { echo "pre-commit hook: fix the lint errors above (or \`$ruff check --fix\`)" >&2; exit 1; }
+# shellcheck disable=SC2086
+$ruff format --check $files || { echo "pre-commit hook: run \`$ruff format $files\` and stage the result" >&2; exit 1; }

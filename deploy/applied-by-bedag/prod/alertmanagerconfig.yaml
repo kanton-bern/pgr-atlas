@@ -1,0 +1,67 @@
+# Where stage "prod"'s alerts go (docs/monitoring.md). Written by Bedag
+# and applied by them; NOT applied by
+# Flux, and our users can't read or write it. Change it here, then ask Bedag
+# to apply it again (../README.md).
+#
+# Not the Prometheus Operator's AlertmanagerConfig but Bedag's own type
+# (observability.bedag.crossplane.io), which carries a plain Alertmanager
+# configuration (snake_case keys, as in alertmanager.yml) for their tenant
+# bedag-cloud-aw3-pgr. The Secret is a placeholder the type requires.
+#
+# Routing: the root route discards (receiver "null"); the child route mails
+# every alert labelled email="true" (our rules set it:
+# ../../stages/base/monitoring/prometheusrule.yaml, applied by Flux). No
+# cluster or namespace matcher: test and prod configs are the same apart from
+# the names. If the stages ever need different recipients, match
+# k8s_cluster_name (Bedag adds it to every alert) in the child route.
+#
+# Mail relay and sender as Bedag set them (the relay has no TLS, hence
+# require_tls: false). Recipient: the alert mailbox in `to`,
+# for every alert (critical and warning; all rules set email="true"). More
+# recipients: extend the comma-separated list in `to` (one mail to all).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pgr-atlas-prod-alertmanager
+  namespace: bedag-cloud-aw3-pgr
+  labels:
+    customer.gitops.bedag.ch/hlq: aw3
+    customer.gitops.bedag.ch/stage: prod
+type: Opaque
+stringData:
+  placeholder: "unused"
+---
+apiVersion: observability.bedag.crossplane.io/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: pgr-atlas-prod
+  # Explicit, unlike the files under deploy/stages/ (there kustomize sets it)
+  namespace: bedag-cloud-aw3-pgr
+  labels:
+    customer.gitops.bedag.ch/hlq: aw3
+    customer.gitops.bedag.ch/stage: prod
+spec:
+  secretRef:
+    name: pgr-atlas-prod-alertmanager
+  alertmanagerConfig:
+    route:
+      receiver: "null"
+      # One mail per stage: an outage fires several rules at once
+      group_by: [namespace]
+      group_wait: 1m
+      group_interval: 5m
+      # Email, not a pager: remind twice a day about what is still firing
+      repeat_interval: 12h
+      routes:
+        - receiver: email
+          matchers:
+            - email="true"
+    receivers:
+      - name: "null"
+      - name: email
+        email_configs:
+          - to: alert@skerlak.ch
+            from: k8s-monitoring@kb-bedag.ch
+            smarthost: mailrelay.svc.kb-bedag.ch:25
+            require_tls: false
+            send_resolved: true

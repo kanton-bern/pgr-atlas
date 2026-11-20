@@ -1,0 +1,559 @@
+/* Base styles for the MapLibre map components' shared chrome (map-controls.ts):
+   legend box shell, the control column and its popovers (coordinate search,
+   basemaps), zoom readout, popups and the map status line.
+
+   Layout: one control column on the right edge (zoom, "Zoom Kanton Bern",
+   search, basemap), layers top left, scale + zoom level bottom left. What is
+   in a legend, draw tools and data legends belong to each component. */
+
+/* The design tokens, shared with the Streamlit side. */
+@import "../../../app/styles/tokens.css";
+
+/* Roboto, the guide's font, from the files the Streamlit side serves; Vite
+   bundles them with each component. swap: the map text shows in Arial until
+   Roboto has loaded, instead of staying invisible. */
+@font-face {
+  font-family: Roboto;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../../app/static/fonts/roboto-400.woff") format("woff");
+}
+@font-face {
+  font-family: Roboto;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../../app/static/fonts/roboto-500.woff") format("woff");
+}
+@font-face {
+  font-family: Roboto;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../../app/static/fonts/roboto-700.woff") format("woff");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e8ecef;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+/* MapLibre sets its own font on the map (Helvetica Neue, Arial); its scale bar
+   and attribution inherit it. This rule comes after maplibre-gl.css, so it wins. */
+.maplibregl-map {
+  font-family: var(--mc-font);
+}
+
+/* ── Top-left: layer/legend toggle box (view-specific content) ─────────── */
+#tl-stack {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  /* Clear of the control column (MapLibre's 29 px buttons, 10 px from the
+     edge): a long layer name wraps instead of covering zoom and search. */
+  right: calc(29px + 2 * var(--mc-gap));
+  /* The stack is that wide now; only its boxes take clicks, the rest reach the map. */
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mc-gap);
+  z-index: 10;
+}
+#tl-stack > * {
+  pointer-events: auto;
+}
+#legend {
+  position: relative;
+  background: var(--mc-bg);
+  border-radius: var(--mc-radius);
+  padding: 8px 22px 8px 12px;
+  font-family: var(--mc-font);
+  font-size: var(--mc-body-size);
+  line-height: 1.7;
+  box-shadow: var(--mc-shadow);
+  user-select: none;
+}
+/* Legend rows are <label>s around a checkbox in every view. */
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 3px;
+  transition: opacity 0.15s;
+}
+.legend-row:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.legend-row input[type="checkbox"] {
+  margin: 0 2px 0 0;
+}
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+/* The swatches of the two toggle layers every view has; the same colours as
+   the layers' paint in map-controls.ts. */
+.legend-dot--gold {
+  background: #d4af37;
+}
+.legend-dot--prozessquelle {
+  background: #a0785a;
+}
+/* A raster layer's row: its colours are in the view's legend, so the swatch
+   only says "a colour scale". */
+.legend-dot--raster {
+  background: linear-gradient(to right, var(--pgr-surface), var(--pgr-brand));
+  border: 1px solid var(--pgr-line);
+  box-sizing: border-box;
+}
+/* The opacity slider below a raster layer's row (layer-box.ts), indented to
+   the row's label. */
+.legend-opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 2px 26px;
+  color: var(--pgr-text);
+  cursor: pointer;
+}
+.legend-opacity input[type="range"] {
+  width: 96px;
+  margin: 0;
+  accent-color: var(--pgr-brand);
+  cursor: pointer;
+}
+.legend-opacity input[type="range"]:focus-visible {
+  outline: 2px solid var(--pgr-focus);
+  outline-offset: 2px;
+}
+.legend-opacity-value {
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* The layer is off: the slider keeps its value but can't be moved. */
+.legend-opacity--off {
+  color: var(--pgr-text-muted);
+  cursor: default;
+}
+.legend-opacity--off input[type="range"] {
+  cursor: default;
+}
+.legend-subtitle {
+  font-weight: 700;
+  margin-bottom: 3px;
+  font-size: 12px;
+}
+/* A title with buttons right after it, e.g. the area classes' "Alle · Keine";
+   not at the box's right edge, where the overview's ✕ sits. */
+.legend-subtitle-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mc-gap);
+  margin-bottom: 3px;
+}
+.legend-subtitle-row .legend-subtitle {
+  margin-bottom: 0;
+}
+.area-classes-links {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+/* Buttons that look like the app's links: underlined, the line red on hover. */
+.area-classes-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--pgr-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.area-classes-link:hover,
+.area-classes-link:focus-visible {
+  text-decoration-color: var(--pgr-accent);
+}
+.area-classes-separator::before {
+  content: "·";
+  color: var(--pgr-text-muted);
+}
+.legend-sep {
+  margin: 6px 0;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+/* Elements are shown and hidden with the hidden attribute; this makes it win
+   over an element's own display rule. */
+[hidden] {
+  display: none !important;
+}
+/* Pointer feedback over clickable map features (setCanvasCursor). */
+.maplibregl-canvas.mc-cursor-pointer {
+  cursor: pointer;
+}
+.maplibregl-canvas.mc-cursor-crosshair {
+  cursor: crosshair;
+}
+/* Small dismiss "x", shared by every legend/value-key box on the map. A
+   <button>: the box is the 24 x 24 px target (WCAG 2.5.8), the round hover
+   background stays 16 px (background-clip), in the spot the 16 px "x" had. */
+.legend-close,
+.mc-popover-close {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  background-clip: content-box;
+  font-family: inherit;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--pgr-text-muted);
+}
+.legend-close:hover,
+.mc-popover-close:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: var(--pgr-text);
+}
+/* Collapsed box (map-controls.ts makeCollapsible): only the "… ▸" chip is
+   left, in the box's own spot. !important beats the views' own sizing
+   (e.g. #raster-legend's fixed width). */
+.legend-open {
+  display: none;
+}
+.mc-collapsed {
+  padding: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+.mc-collapsed > :not(.legend-open) {
+  display: none !important;
+}
+/* The chip fills the collapsed box, so the whole box is its target (at least
+   24 px high, WCAG 2.5.8). */
+.mc-collapsed > .legend-open {
+  display: inline-block;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  color: #444;
+  font-size: var(--mc-body-size);
+  line-height: 1.6;
+}
+.mc-collapsed > .legend-open:hover {
+  color: #000;
+}
+
+.mc-ctrl-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: var(--mc-title-size);
+}
+
+/* ── Right edge: the control column (map-controls.ts initControlColumn), a
+   MapLibre control group below the zoom buttons, so its buttons look like
+   them. The #map-tools prefix beats MapLibre's .maplibregl-ctrl button rules
+   (0,3,1 on hover). ──────────────────────────────────────────────────────── */
+#map-tools button {
+  color: var(--pgr-text);
+}
+#map-tools .mc-tool-icon {
+  display: block;
+  margin: auto;
+}
+#map-tools button[aria-expanded="true"] {
+  background-color: var(--pgr-brand);
+  color: var(--pgr-bg);
+}
+#map-tools button[aria-expanded="true"]:hover {
+  background-color: var(--pgr-brand-dark);
+}
+/* Keyboard focus on the zoom buttons and the column: the app's outline
+   instead of MapLibre's blue glow. */
+#map .maplibregl-ctrl-group button:focus-visible {
+  outline: 2px solid var(--pgr-focus);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* A popover panel of the column: in MapLibre's top-right corner, outside any
+   .maplibregl-ctrl, to the left of the column. map-controls.ts sets top and
+   right when it opens. */
+.mc-popover {
+  position: absolute;
+  /* The corner is only as wide as the column; without this the panel would
+     shrink to that width. */
+  width: max-content;
+  pointer-events: auto;
+  background: var(--mc-bg);
+  border-radius: var(--mc-radius);
+  padding: 10px 12px 12px;
+  font-family: var(--mc-font);
+  font-size: var(--mc-body-size);
+  line-height: 1.6;
+  box-shadow: var(--mc-shadow);
+  user-select: none;
+}
+.mc-popover .mc-ctrl-title {
+  margin-bottom: 6px;
+  padding-right: 20px;
+}
+/* The popover's ✕ (map-controls.ts POPOVER_CLOSE_HTML): like a legend's,
+   with room from the corner for the larger padding. */
+.mc-popover-close {
+  top: 4px;
+  right: 4px;
+}
+
+/* Coordinate search: X and Y side by side, each label a fixed prefix inside
+   its field's border, the button on its own row at the right. Fields have
+   square corners (Kanton Bern M9) and no number spinners. */
+#search-ctrl {
+  min-width: 250px;
+}
+#search-ctrl .search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 8px;
+}
+#search-ctrl .search-field {
+  display: flex;
+  align-items: center;
+  border-radius: var(--pgr-radius-input);
+  border: 1px solid var(--pgr-text-muted);
+  background: var(--pgr-input-bg);
+}
+#search-ctrl .search-field:focus-within {
+  border-color: var(--pgr-focus);
+  box-shadow: inset 4px 0 0 var(--pgr-focus);
+}
+#search-ctrl label {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 9px;
+  border-right: 1px solid var(--pgr-text-muted);
+  color: var(--pgr-text-muted);
+  font-size: var(--mc-body-size);
+  cursor: text;
+}
+#search-ctrl input {
+  min-width: 0;
+  width: 90px;
+  padding: 5px 8px 5px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--pgr-text);
+  font-family: inherit;
+  font-size: var(--mc-body-size);
+  appearance: textfield;
+}
+#search-ctrl input:focus-visible {
+  outline: none;
+}
+#search-ctrl input::-webkit-inner-spin-button,
+#search-ctrl input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+#search-ctrl #search-go {
+  grid-column: 2;
+  justify-self: end;
+  margin-top: 6px;
+  min-height: 28px;
+  padding: 4px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--pgr-brand);
+  background: var(--pgr-brand);
+  color: var(--pgr-bg);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: var(--mc-body-size);
+}
+#search-ctrl #search-go:hover {
+  background: var(--pgr-brand-dark);
+}
+#search-ctrl .mc-search-error {
+  color: var(--pgr-error);
+  font-size: 11px;
+  margin-top: 4px;
+  min-height: 14px;
+}
+#search-ctrl .mc-search-error:empty {
+  display: none;
+}
+
+/* ── Bottom-left: zoom-level readout, stacked above the native metric
+   scale bar (MapLibre's ScaleControl, also added by initChrome). ────────── */
+#zoom-debug {
+  position: absolute;
+  bottom: 40px;
+  left: 10px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: var(--mc-body-size);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Basemap choices, a popover of the control column. <button>s that look
+   like list rows. ────────────────────────────────────────────────────────── */
+#basemap-ctrl .bm-btn {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 2px 7px;
+  margin: 1px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--pgr-text);
+  font: inherit;
+  text-align: left;
+  transition: background 0.12s;
+}
+/* The active button is bold and therefore wider. Each button reserves the
+   width of its bold label up front, so the box keeps its size when the
+   selection changes. */
+.bm-btn::after {
+  content: attr(data-label);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 600;
+}
+#basemap-ctrl .bm-btn:hover {
+  background: var(--pgr-surface);
+}
+#basemap-ctrl .bm-btn.active {
+  background: var(--pgr-brand);
+  color: var(--pgr-bg);
+  font-weight: 600;
+}
+
+/* ── Popups (the Simulierte Ereignisse anriss popup, IFK's anriss/pixel popups) ── */
+.maplibregl-popup-content {
+  font-family: var(--mc-font);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 26px 10px 14px;
+  border-radius: 7px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  min-width: 160px;
+}
+/* MapLibre's "x": a 24 x 24 px target (WCAG 2.5.8) in the corner that the
+   content's right padding keeps free. */
+.maplibregl-popup-close-button {
+  width: 24px;
+  height: 24px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--pgr-text-muted);
+  border-radius: 0 7px 0 0;
+}
+.maplibregl-popup-close-button:hover {
+  color: var(--pgr-text);
+}
+.maplibregl-popup-content b {
+  color: var(--pgr-text);
+  font-size: 13px;
+}
+.popup-open-btn {
+  margin-top: 7px;
+  display: block;
+  width: 100%;
+  background: var(--pgr-brand);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  min-height: 28px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+.popup-open-btn:hover {
+  background: var(--pgr-brand-dark);
+}
+.popup-open-btn:disabled {
+  background: var(--pgr-text-muted);
+  cursor: not-allowed;
+}
+
+/* ── Top-centre: map status (map-controls.ts, MapStatus) — a crop still
+   loading, or data that failed to load. Hidden when there's nothing to say.
+   A <button>: a click or Enter closes an error. */
+#map-status {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: none;
+  max-width: 60%;
+  padding: 6px 12px;
+  border: 0;
+  text-align: center;
+  border-radius: var(--mc-radius);
+  box-shadow: var(--mc-shadow);
+  font-family: var(--mc-font);
+  font-size: var(--mc-body-size);
+  user-select: none;
+}
+#map-status.loading {
+  display: block;
+  background: var(--mc-bg);
+  color: #444;
+  pointer-events: none;
+}
+#map-status.error {
+  display: block;
+  background: var(--pgr-error-bg);
+  color: var(--pgr-error);
+  border: 1px solid var(--pgr-error);
+  cursor: pointer;
+}
+
+/* Keyboard focus, as on the Streamlit side. */
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--pgr-focus);
+  outline-offset: 2px;
+}

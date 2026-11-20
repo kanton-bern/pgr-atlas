@@ -1,0 +1,48 @@
+/* Design tokens: the one set of values the Streamlit side (app.css) and the map
+   components (frontend/src/shared/map-controls.css) share. app.py loads this
+   file before app.css; Vite inlines it into each component's bundle at build
+   time, so the two sides cannot drift.
+   Values from the Kanton Bern web style guide, docs/frontend-app/style-tokens.md.
+   Streamlit's own widgets take theirs from the theme in app/.streamlit/config.toml.
+   Data colours (legend ramps, area classes, outlines) are not tokens; they stay
+   with the code that draws the data.
+   Never write a "less than" sign in this file, not even in a comment: the HTML
+   sanitizer then drops the whole style element and the app is unstyled. */
+
+:root {
+  /* Colours */
+  --pgr-bg: #FFFFFF;           /* page background */
+  --pgr-surface: #F8F8F8;      /* sidebar, quiet boxes */
+  --pgr-text: #000000;
+  --pgr-text-muted: #707070;   /* secondary text, input borders (4.95:1 on white) */
+  --pgr-line: rgba(112, 112, 112, 0.5); /* the guide's Line Grey 50 %: rules between list rows */
+  --pgr-brand: #4E4E4E;        /* Anthrazit: primary buttons, active nav and map buttons */
+  --pgr-brand-dark: #404040;   /* Anthrazit on hover */
+  --pgr-accent: #EA161F;       /* Kanton Bern red, sparingly: markers, link hover line */
+  --pgr-project: #5B7D7E;      /* the project logo's teal: the identity band only, never text or state */
+  --pgr-focus: #000000;        /* keyboard focus outline */
+  --pgr-input-bg: #FEFEFE;
+  --pgr-error: #D01018;
+  --pgr-error-bg: #FCE8E9;
+  --pgr-info: #1775D3;
+  --pgr-info-bg: #E9F2FB;
+  --pgr-success: #3D8608;
+  --pgr-warning: #DD6600;      /* borders and icons only: 3.51:1 on white is too low for text */
+  --pgr-radius-input: 0;       /* inputs and boxes have square corners; buttons are pills (theme) */
+
+  /* Map chrome (legend box, basemap switcher, search, value legends) */
+  --mc-radius: 7px;
+  --mc-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  --mc-bg: rgba(255, 255, 255, 0.93);
+  --mc-gap: 10px;
+  --mc-font: Roboto, Arial, sans-serif;
+  /* One title size and one body size for every map chrome box, so they read
+     as one system. Weight 400: the guide's 300 is too thin at 12 px on a map. */
+  --mc-title-size: 13px;
+  --mc-body-size: 12px;
+
+  /* The Simulierte Ereignisse map fills the window down to the footer, but not below this
+     height: on a short window the page scrolls instead, so the map's corner
+     boxes (layers, zoom, scale bar, basemaps) keep room between them. */
+  --pgr-overview-map-min-height: 400px;
+}

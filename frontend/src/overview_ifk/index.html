@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* The colour scale of the anriss circles (the summed event rate λ, log scale).
+         Bottom centre like the other colour-scale legends; hidden until a
+         pixel with anrisse is selected. */
+      #anriss-legend {
+        position: absolute;
+        bottom: 34px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: var(--mc-bg);
+        border-radius: 9px;
+        padding: 10px 26px 9px 16px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+        min-width: 220px;
+        font-family: var(--mc-font);
+        user-select: none;
+      }
+      #anriss-legend .al-title {
+        font-size: var(--mc-title-size);
+        font-weight: 700;
+        color: var(--pgr-text);
+        margin-bottom: 6px;
+      }
+      #anriss-legend .al-bar {
+        height: 16px;
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+      }
+      #anriss-legend .al-ticks {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--mc-body-size);
+        color: #333;
+        margin-top: 4px;
+        font-weight: 600;
+      }
+      /* The outline of an area's anrisse (layers.ts, ANRISS_OUTLINE_COLOR). */
+      .legend-dot--anriss-outline {
+        background: rgba(189, 0, 38, 0.12);
+        border: 2px solid #bd0026;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="anriss-legend" hidden>
+      <button type="button" class="legend-close" data-close-target="anriss-legend">✕</button>
+      <!-- data-text names the label each element shows (the labels render arg). -->
+      <div class="al-title" data-text="anriss_legend_title"></div>
+      <div class="al-bar" id="al-bar"></div>
+      <div class="al-ticks">
+        <span id="al-min"></span><span id="al-mid"></span><span id="al-max"></span>
+      </div>
+    </div>
+    <div id="tl-stack">
+      <div id="legend">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="legend"
+          data-open-label="layers"
+        >
+          ✕
+        </button>
+        <div class="mc-ctrl-title" data-text="layers"></div>
+        <label class="legend-row">
+          <!-- Checked state comes from the shared chrome state (addGoldCoverageLayer). -->
+          <input type="checkbox" id="gold-toggle" />
+          <div class="legend-dot legend-dot--gold"></div>
+          <span data-text="gold_coverage"></span>
+        </label>
+        <label class="legend-row">
+          <input type="checkbox" id="prozessquelle-toggle" />
+          <div class="legend-dot legend-dot--prozessquelle"></div>
+          <span data-text="prozessquellen"></span>
+        </label>
+        <!-- The classes filter a pixel's anriss circles; an area shows one outline instead. -->
+        <div id="anriss-area-box">
+          <hr class="legend-sep" />
+          <div class="legend-subtitle-row">
+            <div class="legend-subtitle" data-text="anriss_area"></div>
+            <!-- "Alle · Keine" (shared/area-legend.ts). -->
+            <div id="anriss-area-all-none" class="area-classes-links"></div>
+          </div>
+          <div id="anriss-area-rows"></div>
+        </div>
+        <div id="anriss-outline-row" class="legend-row" hidden>
+          <div class="legend-dot legend-dot--anriss-outline"></div>
+          <span data-text="anriss_outline"></span>
+        </div>
+      </div>
+      <div id="draw-ctrl">
+        <button type="button" id="draw-btn" aria-pressed="false" data-text="draw_rect"></button>
+        <button
+          type="button"
+          id="draw-poly-btn"
+          aria-pressed="false"
+          data-text="draw_polygon"
+        ></button>
+        <button type="button" id="clear-btn" data-text="draw_clear" hidden></button>
+        <div id="bbox-readout"></div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

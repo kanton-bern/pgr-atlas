@@ -1,0 +1,102 @@
+# Full-app browser tests (tests/e2e) against the adelboden-test bucket, with the key from the repo secrets
+# ADELBODEN_TEST_S3_ACCESS_KEY / ADELBODEN_TEST_S3_KEY_SECRET. The tests only read, but the key is not
+# limited to reading or to that bucket: Hosttech keys are account-wide.
+#
+# Separate from ci.yml, which gates the image build: a test-bucket outage must
+# not block a release. Without the secrets (not added yet, or a Dependabot or
+# fork PR) the job ends green with a notice instead of running.
+#
+# AppTest (tests/apptest) is slower and runs per release: apptest.yml.
+name: E2E
+
+# Not on every pull request: at about 8 billed minutes a run, twice per merged
+# pull request, it would use up the month's Actions minutes. It runs for a release, and by hand for a branch that changes
+# the app's behaviour: the "e2e" label on its pull request, or
+#   gh workflow run e2e.yml --ref <branch>
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  # Adding the label "e2e" to a pull request runs it once on that pull
+  # request (its merge with the base branch). New pushes don't run it again:
+  # remove the label and add it back for another run.
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+# Other labels added to the pull request get their own group, so they don't
+# cancel a run.
+concurrency:
+  group: e2e-${{ github.ref }}-${{ github.event.label.name || 'run' }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'e2e'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # The same Playwright image as frontend.yml: Chromium and its system
+    # packages are in it. Installing them here took 24 s to over 10 min, depending
+    # on Ubuntu's mirror; starting the container takes a steady half minute.
+    # Its tag matches playwright in uv.lock (ci.yml checks it).
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
+    steps:
+      - name: Check for the test bucket key
+        id: key
+        env:
+          ACCESS_KEY: ${{ secrets.ADELBODEN_TEST_S3_ACCESS_KEY }}
+        run: |
+          if [ -n "$ACCESS_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No ADELBODEN_TEST_S3_ACCESS_KEY here; e2e skipped."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        if: steps.key.outputs.present == 'true'
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.19"
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: false
+
+      - name: Install app and dev dependencies (uv.lock)
+        if: steps.key.outputs.present == 'true'
+        run: uv sync --frozen
+
+      - name: Set up Node
+        if: steps.key.outputs.present == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+          package-manager-cache: false
+
+      # The app serves the built pages in app/<component>/dist/.
+      - name: Build the map components (frontend/)
+        if: steps.key.outputs.present == 'true'
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      # Nothing to do: the image's tag matches uv.lock (checked in ci.yml).
+      - name: Check Chromium
+        if: steps.key.outputs.present == 'true'
+        run: python -m playwright install chromium
+
+      # Starts app/run_app.py on free ports; the fixture picks the test bucket.
+      - name: E2E
+        if: steps.key.outputs.present == 'true'
+        env:
+          PROBE_S3_ACCESS_KEY_ID: ${{ secrets.ADELBODEN_TEST_S3_ACCESS_KEY }}
+          PROBE_S3_SECRET_ACCESS_KEY: ${{ secrets.ADELBODEN_TEST_S3_KEY_SECRET }}
+        run: pytest -m e2e --durations=25

@@ -1,0 +1,20 @@
+# Lets Bedag's Prometheus read the app's own metrics (docs/monitoring.md,
+# section 9): /metrics of the tile server, reached through the pod's proxy on
+# the one Service the chart renders. One target per pod.
+#
+# The selector names no stage (the Service's instance label carries it), so
+# the same file serves every stage. With Flux's prune: false, removing this
+# file leaves the object in the cluster: delete it there by hand as well.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pgr-atlas-app
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pgr-atlas
+      app.kubernetes.io/component: app
+  endpoints:
+    - port: http
+      path: /pmtiles-data/metrics
+      interval: 60s

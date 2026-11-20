@@ -1,0 +1,20 @@
+# Egress for the s3-toolbox pod to Bedag's S3 grid -- the same rule as
+# ../pgr-atlas/networkpolicies/allow-egress-to-s3-test.yaml, which the app's
+# pods use (verified with boto3 from the app pod, 2026-09-25). A separate policy
+# rather than widening the app's, so the app's egress stays untouched.
+# DNS and the proxy (Hosttech) need no rule: Bedag allows both cluster-wide.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-egress-s3-toolbox
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: x7ba-s3-kakbfe.infra.be.ch
+    toPorts:
+    - ports:
+      - port: "10443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: s3-toolbox

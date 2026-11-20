@@ -1,0 +1,213 @@
+"""S3 access shared by the app and the pipeline: boto3 clients, DuckDB httpfs
+configuration (including the egress proxy), and small key helpers.
+
+Settings come from the environment, read when they are used rather than at
+import time, so an entry point may load a .env file after importing this module:
+
+    PROBE_S3_ENDPOINT_URL                       default https://f712.gos3.io
+    PROBE_S3_REGION                             signing region; unset = client default
+    PROBE_S3_ACCESS_KEY_ID                      S3 key
+    PROBE_S3_SECRET_ACCESS_KEY                  S3 secret
+    https_proxy / http_proxy / no_proxy         egress proxy, see _duckdb_proxy_for
+
+HOSTTECH_BERLIN_OBJECT_STORAGE_ACCESS_KEY / _KEY_SECRET still work as a
+fallback for the two key variables, so deployments can switch one at a time.
+The PROBE_S3_* names say nothing about the provider because the same code
+reads Hosttech (Ceph) and Bedag (StorageGRID).
+
+Both providers are addressed path-style (https://<endpoint>/<bucket>/<key>):
+Bedag's network policy allows exactly the endpoint's host name, so the
+virtual-host style (<bucket>.<endpoint>) would be blocked, and Hosttech serves
+both. Checksums are sent only where the S3 API requires them: boto3 >= 1.36
+adds CRC checksums to every request by default, which several S3-compatible
+stores reject (same settings as pgr-atlas's tools/s3/s3m.py).
+
+Loading .env is the entry point's job; nothing here calls load_dotenv().
+"""
+
+import os
+from collections.abc import Mapping
+
+import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError
+
+DEFAULT_S3_ENDPOINT = "https://f712.gos3.io"
+
+
+class _S3Config(Mapping):
+    """The S3 settings as a read-only mapping ("endpoint_url", "region",
+    "access_key", "secret_key") whose values are looked up in the environment
+    on every access, so S3_CONFIG["..."] reads like a dict but always sees
+    the current environment. Each key lists its variables in order of
+    precedence; the last entry is the default."""
+
+    _ENV = {
+        "endpoint_url": ("PROBE_S3_ENDPOINT_URL", DEFAULT_S3_ENDPOINT),
+        "region": ("PROBE_S3_REGION", None),
+        "access_key": ("PROBE_S3_ACCESS_KEY_ID", "HOSTTECH_BERLIN_OBJECT_STORAGE_ACCESS_KEY", None),
+        "secret_key": (
+            "PROBE_S3_SECRET_ACCESS_KEY",
+            "HOSTTECH_BERLIN_OBJECT_STORAGE_KEY_SECRET",
+            None,
+        ),
+    }
+
+    def __getitem__(self, key):
+        *names, default = self._ENV[key]
+        return next((os.environ[name] for name in names if os.environ.get(name)), default)
+
+    def __iter__(self):
+        return iter(self._ENV)
+
+    def __len__(self):
+        return len(self._ENV)
+
+
+S3_CONFIG = _S3Config()
+
+# boto3 settings shared by get_s3_client and get_s3_resource; see the module
+# docstring for why path-style and checksums "when_required".
+_BOTO_CONFIG = dict(
+    s3={"addressing_style": "path"},
+    request_checksum_calculation="when_required",
+    response_checksum_validation="when_required",
+    retries={"max_attempts": 10, "mode": "adaptive"},
+    max_pool_connections=50,  # Better for 32-core machines
+)
+
+# Client singletons, created on first use (after the entry point has set up
+# its environment), once per process.
+_S3_CLIENT = None
+_S3_RESOURCE = None
+
+
+def _duckdb_proxy_for(host: str):
+    """(address, username, password) of the HTTP proxy DuckDB should use to
+    reach `host` -- address as DuckDB's 'host:port' -- derived from the
+    standard https_proxy / http_proxy / no_proxy environment variables, or
+    None when no proxy applies.
+
+    DuckDB's httpfs does NOT read those environment variables (verified
+    against duckdb 1.4.3: with https_proxy set, requests still go out
+    directly); only an explicit `SET http_proxy` routes them through the
+    proxy. boto3 does read them. So in an environment with a mandatory egress
+    proxy -- Bedag's clusters route through proxy.kb-bedag.ch:8080 -- boto3
+    calls would work while every DuckDB S3 read fails with "Could not
+    establish connection". no_proxy is evaluated with the stdlib's own rules,
+    so DuckDB and boto3 make the same bypass decision for the same host."""
+    from urllib.parse import unquote, urlsplit
+    from urllib.request import proxy_bypass_environment
+
+    proxy = (
+        os.getenv("https_proxy")
+        or os.getenv("HTTPS_PROXY")
+        or os.getenv("http_proxy")
+        or os.getenv("HTTP_PROXY")
+    )
+    if not proxy or proxy_bypass_environment(host):
+        return None
+    parts = urlsplit(proxy if "://" in proxy else f"http://{proxy}")
+    if not parts.hostname:
+        return None
+    port = parts.port or (443 if parts.scheme == "https" else 80)
+    return (
+        f"{parts.hostname}:{port}",
+        unquote(parts.username) if parts.username else None,
+        unquote(parts.password) if parts.password else None,
+    )
+
+
+def configure_s3_for_duckdb(con):
+    """Point a DuckDB connection's httpfs S3 client at our bucket (same
+    credentials as S3_CONFIG/get_s3_resource, DuckDB's own SET syntax), and
+    route it through the environment's HTTP proxy if there is one -- see
+    _duckdb_proxy_for for why DuckDB needs this spelled out explicitly."""
+    con.execute(f"SET s3_access_key_id='{S3_CONFIG['access_key']}'")
+    con.execute(f"SET s3_secret_access_key='{S3_CONFIG['secret_key']}'")
+    endpoint = S3_CONFIG["endpoint_url"].removeprefix("https://").removeprefix("http://")
+    con.execute(f"SET s3_endpoint='{endpoint}'")
+    con.execute("SET s3_url_style='path'")
+    if S3_CONFIG["region"]:
+        con.execute(f"SET s3_region='{S3_CONFIG['region']}'")
+    proxy = _duckdb_proxy_for(endpoint.split("/")[0])
+    if proxy:
+        address, username, password = proxy
+        con.execute(f"SET http_proxy='{address}'")
+        if username:
+            con.execute(f"SET http_proxy_username='{username}'")
+        if password:
+            con.execute(f"SET http_proxy_password='{password}'")
+
+
+def get_s3_client():
+    """The process's one boto3 S3 client, created on first use and shared by
+    every thread (boto3 clients are thread-safe)."""
+    global _S3_CLIENT
+    if _S3_CLIENT is None:
+        _S3_CLIENT = boto3.client(
+            "s3",
+            endpoint_url=S3_CONFIG["endpoint_url"],
+            region_name=S3_CONFIG["region"],
+            aws_access_key_id=S3_CONFIG["access_key"],
+            aws_secret_access_key=S3_CONFIG["secret_key"],
+            config=Config(**_BOTO_CONFIG),
+        )
+    return _S3_CLIENT
+
+
+def get_s3_resource():
+    """The process's one boto3 S3 resource, created on first use."""
+    global _S3_RESOURCE
+    if _S3_RESOURCE is None:
+        _S3_RESOURCE = boto3.resource(
+            "s3",
+            endpoint_url=S3_CONFIG["endpoint_url"],
+            region_name=S3_CONFIG["region"],
+            aws_access_key_id=S3_CONFIG["access_key"],
+            aws_secret_access_key=S3_CONFIG["secret_key"],
+            config=Config(**_BOTO_CONFIG),
+        )
+    return _S3_RESOURCE
+
+
+def s3_exists(bucket_name, folder_prefix, filename):
+    s3_client = get_s3_client()
+    key = f"{folder_prefix.strip('/')}/{filename}"
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=key)
+        return True
+    except ClientError as error:
+        if error.response["Error"]["Code"] == "404":
+            return False
+        else:
+            raise ValueError(f"S3 Check Error: {error}")
+
+
+def s3_key_exists(bucket_name, key):
+    s3_client = get_s3_client()
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=key)
+        return True
+    except ClientError as error:
+        if error.response["Error"]["Code"] == "404":
+            return False
+        else:
+            raise ValueError(f"S3 Check Error: {error}")
+
+
+def s3_presigned_url(bucket_name, key, expires=86400):
+    """Signed GET URL for direct browser download, bypassing the app process
+    entirely -- a pure local HMAC computation (no network round-trip to
+    *create* it), so it's cheap to call on every Streamlit rerun without any
+    caching. Standard S3 API (SigV4), not AWS/Hosttech-specific -- works
+    against any S3-compatible endpoint, same as every other S3 call in this
+    file. Not pinned to a specific object version: if the underlying key gets
+    overwritten before the URL is used (or expires), it resolves to whatever
+    is current at request time, not what was there when the URL was signed
+    (fine for the derivate lake, which is immutable except for a deliberate
+    --force rebuild, where serving the corrected version is the desired
+    behavior anyway)."""
+    return get_s3_client().generate_presigned_url(
+        "get_object", Params={"Bucket": bucket_name, "Key": key}, ExpiresIn=expires
+    )

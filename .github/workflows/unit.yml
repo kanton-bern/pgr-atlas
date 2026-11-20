@@ -1,0 +1,62 @@
+# pytest without the browser tests (tests/components), no container, about a
+# minute. The tests mock S3; no credentials are needed.
+#
+# Runs on a pull request that changes what these tests read, at the same time
+# as ci.yml, and for a release (build-and-push.yml calls it for version tags).
+# The map-component tests are in frontend.yml.
+name: Unit tests
+
+on:
+  pull_request:
+    # GitHub reads the patterns in order and the last match wins, so each `!`
+    # follows the pattern it narrows. Markdown doesn't count, except app/legal/:
+    # tests read those pages (the download dialog links to a heading on one).
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "packages/**"
+      - "tools/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/unit.yml"
+      - "!**.md"
+      - "app/legal/**"
+      - "!tests/components/**"
+  workflow_call: {}
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels the run for the one before. Runs called
+# from build-and-push.yml each get their own group, so none is cancelled.
+concurrency:
+  group: unit-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.19"
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: false
+
+      - name: Install app and dev dependencies (uv.lock)
+        run: uv sync --frozen
+
+      # testpaths (pyproject.toml) includes packages/probe-core/tests.
+      - name: Pytest
+        run: pytest --ignore=tests/components
+
+      # Not a check: the texts still missing in French, for Kanton Bern (AWN).
+      - name: Texts missing in French
+        run: python tools/texts_status.py

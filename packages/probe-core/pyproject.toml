@@ -1,0 +1,26 @@
+[project]
+name = "probe-core"
+version = "0"   # releases are this repository's git tags, not this field
+description = "Shared S3 access, data-lake schema and read layer, and derivate computations of PGR-Atlas and its simulation pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]   # a copy of the repository's LICENSE: the wheel may only take files from here
+# Ranges, not exact pins: the app pins exact versions in the root pyproject.toml,
+# and the pipeline (ProBE_control_center) resolves its own. Lower bounds are the
+# versions the code was tested with.
+dependencies = [
+    "boto3>=1.44.2",  # request_checksum_calculation (s3.py)
+    "duckdb>=1.4,<3",
+    "geopandas>=1.0,<2",
+    "numpy>=1.26,<3",
+    "pandas>=2.2,<4",   # the pipeline runs pandas 3
+    "psutil>=5.9",
+    "pyproj>=3.6,<4",   # CRS transforms (data_interface.py)
+    "rasterio>=1.4,<2",
+    "shapely>=2.0,<3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.8,<0.14.0"]
+build-backend = "uv_build"

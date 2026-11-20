@@ -1,0 +1,24 @@
+# Egress for the s3-toolbox pod to Bedag's S3 grid -- a copy of
+# ../../test/s3-toolbox/allow-egress-s3-toolbox.yaml. The app's pods have
+# their own policy (../pgr-atlas/networkpolicies/).
+# ASSUMED: prod's S3Tenant (Bedag's, not in our Git) sits on the same grid
+# endpoint as test's; we can read neither the S3Tenant nor the policies. If
+# `s3m buckets bedag_admin` times out, ask Bedag for the endpoint and set it here and
+# as S3M_BEDAG_ADMIN_ENDPOINT in deployment.yaml.
+# DNS and the proxy (Hosttech) need no rule on test, where Bedag allows both
+# cluster-wide; ASSUMED the same on prod.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-egress-s3-toolbox
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: x7ba-s3-kakbfe.infra.be.ch
+    toPorts:
+    - ports:
+      - port: "10443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: s3-toolbox

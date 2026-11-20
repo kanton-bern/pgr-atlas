@@ -1,0 +1,8 @@
+apiVersion: s3.bedag.ch/v1alpha1
+kind: S3Bucket
+metadata:
+  name: aw3-pgr-atlas-prod
+spec:
+  bucketName: aw3-pgr-atlas-prod
+  s3TenantRef:
+    name: aw3-pgr-atlas-s3-prod

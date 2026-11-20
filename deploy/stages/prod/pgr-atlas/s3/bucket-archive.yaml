@@ -1,0 +1,11 @@
+# A second bucket in the stage's tenant, for archive data (2026-10-08). It
+# shares the tenant's quota with aw3-pgr-atlas-prod. Not versioned until
+# `s3m versioning` switches it on (docs/s3.md, section 5).
+apiVersion: s3.bedag.ch/v1alpha1
+kind: S3Bucket
+metadata:
+  name: aw3-pgr-atlas-prod-archive
+spec:
+  bucketName: aw3-pgr-atlas-prod-archive
+  s3TenantRef:
+    name: aw3-pgr-atlas-s3-prod

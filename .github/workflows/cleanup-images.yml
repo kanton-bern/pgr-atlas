@@ -1,0 +1,44 @@
+# Prunes old ghcr.io/skerlakanalytics/pgr-atlas image versions, daily.
+#
+# Deletes UNTAGGED versions only, older than 1 day: the leftovers created each
+# time a moving tag (:main, :latest, :<branch>) is re-pointed at a newer build.
+# Nothing deploys them (Bedag pins releases), so one day of grace is enough.
+#
+# Safe only while every image is a single manifest, as build-and-push.yml
+# produces. Multi-platform builds or provenance/SBOM
+# attestations would add untagged child manifests that belong to a tagged image;
+# deleting those breaks the tagged image. Re-check this before enabling either.
+# Tagged versions are never deleted -- releases (:vX.Y.Z) are what the Bedag
+# stages pin. build-and-push.yml sets no per-commit tags, so nothing tagged
+# accumulates with every push; the only tags that stay are releases, :latest,
+# :main and one per manually built branch (delete those by hand on the package
+# page when the branch is gone).
+#
+# This workflow uses the built-in GITHUB_TOKEN, and with that token the action
+# cannot use tag filters (`*`, `!`) at all. (The earlier `skip-tags: test` is
+# not an input of v3 and was silently ignored; with `keep-n-most-recent: 1` that
+# config would have deleted pinned releases.) Untagged-only needs no filter.
+#
+# Note: with GITHUB_TOKEN the repository needs the Admin role on the package.
+name: Clean up old images
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily at 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  packages: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old untagged image versions
+        uses: snok/container-retention-policy@d3bdcf5ce9b05f685154e4a16c39233b245e3d53 # v3.1.0
+        with:
+          account: skerlakanalytics
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: pgr-atlas
+          cut-off: 1d
+          tag-selection: untagged

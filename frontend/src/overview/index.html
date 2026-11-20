@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* Only this view sits at the very top of Streamlit's main area; the others
+         have a heading above the map. At the shared offset, Streamlit's ~60 px
+         sticky header covered the stack's top rows and took their clicks. */
+      #tl-stack {
+        top: 70px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="tl-stack">
+      <div id="legend">
+        <button
+          type="button"
+          class="legend-close"
+          data-close-target="legend"
+          data-open-label="layers"
+        >
+          ✕
+        </button>
+        <!-- data-text names the label each element shows (the labels render arg). -->
+        <div class="legend-subtitle-row">
+          <div class="legend-subtitle" data-text="area"></div>
+          <!-- "Alle · Keine" (shared/area-legend.ts). -->
+          <div id="area-all-none" class="area-classes-links"></div>
+        </div>
+        <div id="area-rows"></div>
+        <hr class="legend-sep" />
+        <label class="legend-row">
+          <!-- Checked state comes from the shared chrome state (addGoldCoverageLayer). -->
+          <input type="checkbox" id="gold-toggle" />
+          <div class="legend-dot legend-dot--gold"></div>
+          <span data-text="gold_coverage"></span>
+        </label>
+        <label class="legend-row">
+          <input type="checkbox" id="prozessquelle-toggle" />
+          <div class="legend-dot legend-dot--prozessquelle"></div>
+          <span data-text="prozessquellen"></span>
+        </label>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
