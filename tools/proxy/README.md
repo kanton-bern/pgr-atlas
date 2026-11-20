@@ -45,7 +45,7 @@ docker build -t pgr-atlas-proxy:local tools/proxy
 docker run -d --name app -p 127.0.0.1:8080:8080 \
   -e PROBE_S3_ACCESS_KEY_ID -e PROBE_S3_SECRET_ACCESS_KEY -e PROBE_S3_BUCKET=adelboden-test \
   -e PMTILES_PATH_PREFIX=/pmtiles-data -e DERIVATE_BBOX_PATH_PREFIX=/derivate-bbox \
-  ghcr.io/skerlakanalytics/pgr-atlas:latest
+  ghcr.io/kanton-bern/pgr-atlas:latest
 docker run -d --name proxy --network container:app pgr-atlas-proxy:local
 # http://localhost:8080
 ```

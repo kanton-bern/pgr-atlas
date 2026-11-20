@@ -122,7 +122,7 @@ only; on Apple Silicon add `--platform linux/amd64` and expect a slow start.
 docker run --rm -d --name pgr-atlas --env-file .env \
   -p 8501:8501 -p 8505:8505 -p 8503:8503 \
   -e PMTILES_BIND=0.0.0.0 -e DERIVATE_BBOX_BIND=0.0.0.0 \
-  ghcr.io/skerlakanalytics/pgr-atlas:latest      # or :main, or a release such as :v0.12.1
+  ghcr.io/kanton-bern/pgr-atlas:latest      # or :main, or a release such as :v0.12.1
 ```
 
 To build the image yourself: `cd docker && ./build.sh` produces
@@ -156,7 +156,7 @@ App pod, behind the canton's front proxy and the Ingress: nginx proxy :8080
    ▼
 Browser: the Streamlit page with the MapLibre map components
 
-git tag v*  ──"Build and push"──►  image ghcr.io/skerlakanalytics/pgr-atlas:v*
+git tag v*  ──"Build and push"──►  image ghcr.io/kanton-bern/pgr-atlas:v*
    │  the build opens one pull request per stage that sets image.tag
    ▼
 deploy/stages/<stage> on main (merge test's pull request, then prod's)
@@ -168,7 +168,7 @@ Bedag clusters kb-common-test and kb-common-prod
 
 In short:
 
-- **One image, no data.** CI builds `ghcr.io/skerlakanalytics/pgr-atlas` from
+- **One image, no data.** CI builds `ghcr.io/kanton-bern/pgr-atlas` from
   `app/` and `docker/`. The image is public and holds no secrets; everything
   under `app/` becomes public with it. Data and credentials arrive at runtime.
 - **Image tags.** A git tag `vX.Y.Z` builds the release `:vX.Y.Z` and moves

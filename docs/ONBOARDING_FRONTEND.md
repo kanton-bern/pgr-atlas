@@ -225,7 +225,7 @@ echo "${PROBE_S3_ACCESS_KEY_ID:?not set}" >/dev/null && echo "creds loaded"
 The GHCR package is public; no `docker login` needed.
 
 ```bash
-docker pull --platform linux/amd64 ghcr.io/skerlakanalytics/pgr-atlas:<tag>
+docker pull --platform linux/amd64 ghcr.io/kanton-bern/pgr-atlas:<tag>
 ```
 
 Use the release Bedag test runs rather than `:main`, so what you see locally matches test. The
@@ -266,7 +266,7 @@ docker run --rm -d --name pgr-atlas --platform linux/amd64 \
   -v "$PWD/app/raster_bbox_map/dist":/app/raster_bbox_map/dist:ro \
   -v "$PWD/app/anriss_map/dist":/app/anriss_map/dist:ro \
   -v "$PWD/app/gebaeudeschatten_map/dist":/app/gebaeudeschatten_map/dist:ro \
-  ghcr.io/skerlakanalytics/pgr-atlas:<tag>
+  ghcr.io/kanton-bern/pgr-atlas:<tag>
 ```
 
 **`PMTILES_PORT` defaults to 8505** in `run_app.py`, `app.py` and the component wrappers,
@@ -324,7 +324,7 @@ docker run --rm --platform linux/amd64 \
   -e PMTILES_PORT=8505 \
   -e PROBE_S3_ACCESS_KEY_ID \
   -e PROBE_S3_SECRET_ACCESS_KEY \
-    ghcr.io/skerlakanalytics/pgr-atlas:<tag> \
+    ghcr.io/kanton-bern/pgr-atlas:<tag> \
   python3 -c \
     "from streamlit.testing.v1 import AppTest; \
      at = AppTest.from_file('app.py', default_timeout=240); at.run(); print(at.exception)"

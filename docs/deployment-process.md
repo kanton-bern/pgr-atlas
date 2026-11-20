@@ -155,7 +155,7 @@ the settings in the stage files.
 
 | Rule | Effect on the project's configuration |
 |---|---|
-| Image registry policy (Kyverno policy `restrict-image-registries`, rule `validate-registries`): only images from `artifacts.bedag.cloud/*` are admitted (a `ghcr.io` image is refused on both clusters) | the stages reference Bedag's mirror `artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas`, which serves the public image from `ghcr.io` |
+| Image registry policy (Kyverno policy `restrict-image-registries`, rule `validate-registries`): only images from `artifacts.bedag.cloud/*` are admitted (a `ghcr.io` image is refused on both clusters) | the stages reference Bedag's mirror `artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas`, which serves the public image from `ghcr.io` |
 | Namespace quota (table below): it counts **requests** for CPU, memory and PVC storage. Limits and ephemeral storage are not part of the quota | the spill volumes take most of the PVC budget (all of prod's); CPU and memory requests leave room on prod, little on test |
 | No direct internet access from pods. DNS and the proxy `proxy.kb-bedag.ch:8080` are allowed for every pod. The proxy only lets listed hosts through (checked from the test toolbox: without the proxy the network is unreachable; through it `f712.gos3.io` and `github.com` answer, `example.com` gets `403 Forbidden`) | only the s3-toolbox sets `http_proxy`, `https_proxy` and `no_proxy`, to reach Hosttech S3 through the proxy; the app's pods set none and reach nothing outside the cluster except Bedag's S3 |
 | Bedag's S3 is reachable only from pods that a network policy allows | `networkpolicies/` holds a `CiliumNetworkPolicy` for the app pods, `s3-toolbox/` one for the toolbox |
@@ -535,7 +535,7 @@ docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revis
 
 ### The image is public
 
-The image is on `ghcr.io/skerlakanalytics/pgr-atlas`, and anyone can pull it
+The image is on `ghcr.io/kanton-bern/pgr-atlas`, and anyone can pull it
 without logging in. That is why the stages need no image pull secret
 (`registry.pullSecret.enabled: false`). The alternative would be a GitHub token
 per stage, encrypted in the repository and renewed whenever it expires.
@@ -550,7 +550,7 @@ configuration there, and never pass secrets into `docker build`
 ([app/README.md](../app/README.md#the-image-is-public)).
 
 Bedag's clusters pull the same image under a different address:
-`artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas:<tag>`. On your own
+`artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas:<tag>`. On your own
 machine, use `ghcr.io` directly.
 
 ---
@@ -599,7 +599,7 @@ assigned to whoever pushed the tag. Each changes one line of its stage's
 
 ```yaml
             image:
-              repository: artifacts.bedag.cloud/ghcr/skerlakanalytics/pgr-atlas
+              repository: artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas
               tag: "v0.2.0"     # the only line that changes
 ```
 
