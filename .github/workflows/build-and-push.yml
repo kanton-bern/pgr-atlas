@@ -213,6 +213,10 @@ jobs:
               continue
             fi
             previous=$(grep -A3 'repository: .*/pgr-atlas$' "$file" | grep -o 'tag: "[^"]*"' | cut -d'"' -f2)
+            if [ "$previous" = "$TAG" ]; then
+              echo "${stage} runs ${TAG} already, skipped"
+              continue
+            fi
             git switch --quiet --create "$branch" origin/main
             .github/scripts/set-image-tag.sh "$file" "$TAG"
             git commit --quiet --all --message "${stage^} stage: image ${TAG}"
