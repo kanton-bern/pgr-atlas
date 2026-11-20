@@ -508,6 +508,8 @@ The app and toolbox Dockerfiles run `apt-get upgrade`, and the proxy's (Alpine)
 `apk upgrade`, so an image carries the security fixes of its build day and not
 only those of the pinned base image. The proxy needs it because the upstream
 nginx image can lag behind Alpine's fixes.
+nginx itself is the exception: the base image pins it to nginx.org's build, so
+a fix in nginx needs a newer base image in `tools/proxy/Dockerfile`.
 
 ### Image tags
 
