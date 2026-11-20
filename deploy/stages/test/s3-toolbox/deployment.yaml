@@ -47,7 +47,7 @@ spec:
           # ghcr.io/kanton-bern/pgr-atlas-s3tools (public), through Bedag's
           # registry mirror like the app. New version: tag s3tools-vX.Y.Z on
           # main, wait for CI, change this line.
-          image: artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas-s3tools:v0.1.5
+          image: artifacts.bedag.cloud/ghcr/kanton-bern/pgr-atlas-s3tools:v0.1.6
           imagePullPolicy: IfNotPresent
           # Lets `kubectl attach` / k9s shell work against the toolbox
           # container. Without this, K9s reports "Unable to use a TTY -
