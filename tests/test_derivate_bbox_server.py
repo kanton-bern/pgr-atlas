@@ -105,33 +105,83 @@ class _MosaicTestCase:
         self.addCleanup(derivate_bbox_server._load_locks.clear)
 
 
+class ReadPacedExpiries:
+    """Expires the mosaic by read progress, not wall time. In production a TTL
+    (600 s) is far longer than any read waits for ds_lock, so one read sees at
+    most one replacement. Expiring on a wall-clock interval would let a reader
+    queued behind the others on a slow runner outlive two TTLs, which production
+    never sees. So the next expiry waits until every reader has finished a read
+    since the last one, and no read spans two expiries, however slow the
+    runner. Reads are also held back by their number, so the run crosses
+    `expiry_count` expiries."""
+
+    def __init__(self, clock, reader_count, reads_per_expiry, expiry_count):
+        self.clock = clock
+        self.reads_per_expiry = reads_per_expiry
+        self.expiry_count = expiry_count
+        self.expiries = 0
+        self.progress = threading.Condition()
+        self.read_since_expiry = [False] * reader_count
+        self.finished = [False] * reader_count
+
+    def wait_before_read(self, read_number):
+        with self.progress:
+            self.progress.wait_for(lambda: self.expiries >= read_number // self.reads_per_expiry)
+
+    def read_done(self, reader_index):
+        with self.progress:
+            self.read_since_expiry[reader_index] = True
+            self.progress.notify_all()
+
+    def reader_finished(self, reader_index):
+        with self.progress:
+            self.finished[reader_index] = True
+            self.progress.notify_all()
+
+    def _every_reader_read_or_finished(self):
+        return all(
+            read or finished for read, finished in zip(self.read_since_expiry, self.finished)
+        )
+
+    def run(self):
+        for _ in range(self.expiry_count):
+            with self.progress:
+                self.progress.wait_for(self._every_reader_read_or_finished)
+                self.clock.now += TTL
+                self.expiries += 1
+                self.read_since_expiry = [False] * len(self.read_since_expiry)
+                self.progress.notify_all()
+
+
 class ExpiryUnderLoadTest(_MosaicTestCase, tornado.testing.AsyncTestCase):
     def test_no_read_touches_a_closed_dataset_across_expiries(self):
         self.patch_boundaries(lambda path: FakeDataset(read_s=0.001))
+        reader_count, reads_per_reader, reads_per_expiry = 8, 30, 3
+        expiries = ReadPacedExpiries(
+            self.clock, reader_count, reads_per_expiry, reads_per_reader // reads_per_expiry
+        )
         errors = []
-        stop = threading.Event()
 
-        def reader():
+        def reader(reader_index):
             try:
-                for _ in range(30):
+                for read_number in range(reads_per_reader):
+                    expiries.wait_before_read(read_number)
                     self.assertEqual(
                         derivate_bbox_server._point_value("affected_mask", None, 1, 0, 0), 1.5
                     )
+                    expiries.read_done(reader_index)
             except Exception as error:  # collected and asserted below
                 errors.append(error)
+            finally:
+                expiries.reader_finished(reader_index)
 
-        def expire_regularly():
-            while not stop.wait(0.02):
-                self.clock.now += TTL
-
-        ticker = threading.Thread(target=expire_regularly)
+        ticker = threading.Thread(target=expiries.run)
         ticker.start()
-        readers = [threading.Thread(target=reader) for _ in range(8)]
+        readers = [threading.Thread(target=reader, args=(index,)) for index in range(reader_count)]
         for reader_thread in readers:
             reader_thread.start()
         for reader_thread in readers:
             reader_thread.join()
-        stop.set()
         ticker.join()
 
         self.assertEqual(errors, [])
