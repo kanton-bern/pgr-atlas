@@ -10,7 +10,7 @@ license-files = ["LICENSE"]   # a copy of the repository's LICENSE: the wheel ma
 # and the pipeline (ProBE_control_center) resolves its own. Lower bounds are the
 # versions the code was tested with.
 dependencies = [
-    "boto3>=1.44.2",  # request_checksum_calculation (s3.py)
+    "boto3>=1.44.3",  # request_checksum_calculation (s3.py)
     "duckdb>=1.4,<3",
     "geopandas>=1.0,<2",
     "numpy>=1.26,<3",
