@@ -12,7 +12,7 @@ license-files = ["LICENSE"]
 # which need a manual test before they move.
 dependencies = [
     "streamlit==1.67.0",
-    "duckdb==2.0.0",
+    "duckdb==2.0.1",
     "geopandas==1.1.4",
     "pyogrio==0.12.1",       # not imported here: geopandas reads files through it
     "rasterio==1.4.4",
@@ -26,7 +26,7 @@ dependencies = [
     # Not imported here: streamlit and geopandas need it at runtime. 26.0.1 is the
     # first release with the Brotli fix for CVE-2026-111497.
     "pyarrow==26.0.1",
-    "boto3==1.44.3",       # brings the matching botocore (imported for its exceptions)
+    "boto3==1.44.7",       # brings the matching botocore (imported for its exceptions)
     "tornado==6.6.1",
     "altair==6.3.0",
     "vl-convert-python==1.9.0.post1",
@@ -40,7 +40,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest==9.2.0",
-    "ruff==0.17.5",
+    "ruff==0.17.6",
     # Matches the CI container (playwright/python in ci.yml); move both together.
     "playwright==1.63.0",
     "pytest-playwright==0.9.0",
